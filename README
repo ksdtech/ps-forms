@@ -1,0 +1,22 @@
+ksf-directory project
+
+Builds a tab-delimited text file for printing,
+or a specially-delimited text file for use with Microsoft Word's
+mail merge.
+
+See the database schema for the students table for the fields to be used in 
+the PowerSchool tab-delimited export file that is used to create the
+database.  
+
+Create (or re-create) the database use the Rails console to call
+
+Student.import
+
+Once the database has been created, use the Rails console to call
+
+Directory.output_text, or
+Directory.output_merge
+
+to write the output files.
+
+

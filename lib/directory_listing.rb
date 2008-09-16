@@ -112,12 +112,12 @@ class DirectoryListing
     'debug' => true,
   }
   
-  def primary_family_id
-    @homes['cust']['family_id']
+  def primary_home_id
+    @homes['cust']['home_id']
   end
 
-  def secondary_family_id
-    @homes['nc']['family_id']
+  def secondary_home_id
+    @homes['nc']['home_id']
   end  
   
   def initialize(last_name, options={})
@@ -126,7 +126,7 @@ class DirectoryListing
     @see_also_refs = { }
     @homes = { 
       'cust' => { 
-        'family_id' => 0,
+        'home_id' => 0,
         'parent_names' => { },
         'address_am' => { },
         'address_ar' => { },
@@ -137,7 +137,7 @@ class DirectoryListing
         ' (Both)' => ''
         }, 
       'nc' => {
-        'family_id' => 0,
+        'home_id' => 0,
         'parent_names' => { },
         'address_am' => { },
         'address_ar' => { },
@@ -156,8 +156,8 @@ class DirectoryListing
     @debug_msgs = [ ]
   end
 
-  def load_cells(key, i, can_format, family_id=0)
-    can_edit = (family_id != 0 && @homes[key]['family_id'] == family_id)
+  def load_cells(key, i, can_format, home_id=0)
+    can_edit = (home_id != 0 && @homes[key]['home_id'] == home_id)
     pre = ''
     post = ''
     if can_format && can_edit 
@@ -266,7 +266,7 @@ class DirectoryListing
     s
   end
 
-  def to_html_table_rows(family_id=0)
+  def to_html_table_rows(home_id=0)
     s = ''
     if @debug
       @debug_msgs.each do | msg |
@@ -274,8 +274,8 @@ class DirectoryListing
       end
     end
     @cells.clear
-    highest_cust = load_cells('cust', 0, true, family_id)
-    highest = load_cells('nc', highest_cust, true, family_id)
+    highest_cust = load_cells('cust', 0, true, home_id)
+    highest = load_cells('nc', highest_cust, true, home_id)
 
     i = 0
     while i < highest
@@ -479,18 +479,18 @@ class DirectoryListing
   def add_student(record, key)  
     first_name = !record['nickname'].nil_or_empty? ? record['nickname'] : record['first_name']
 
-    family_id = record['home_id']
+    home_id = record['home_id']
     if key != 'cust' 
       if !@show_home2  
         return 
       end   
       key = 'nc' 
-      family_id = record['home2_id']
+      home_id = record['home2_id']
     end
-    family_id = 0 if family_id.nil?
+    home_id = 0 if home_id.nil?
 
-    if @homes[key]['family_id'] == 0
-      @homes[key]['family_id'] = family_id
+    if @homes[key]['home_id'] == 0
+      @homes[key]['home_id'] = home_id
     end
 
     grade = record['grade_level']
@@ -517,7 +517,7 @@ class DirectoryListing
   
   def finalize_names(key)
     if key != 'cust'  
-      if @homes['nc']['family_id'] == 0 || !@show_home2  
+      if @homes['nc']['home_id'] == 0 || !@show_home2  
         return 
       end
       key = 'nc' 
@@ -629,11 +629,11 @@ class DirectoryListing
 end
 
 class DirectoryItem
-  attr_accessor :primary_family_id, :secondary_family_id, :cells, :highest
+  attr_accessor :primary_home_id, :secondary_home_id, :cells, :highest
   
   def initialize(h1, h2, cells, highest)
-    @primary_family_id = h1
-    @secondary_family_id = h2
+    @primary_home_id = h1
+    @secondary_home_id = h2
     @cells = cells.dup
     @highest = highest
   end
@@ -647,11 +647,12 @@ end
 class Directory
   attr_accessor :items, :families
   
-  def initialize(family_ids)
+  def initialize(ver, home_ids)
+    @version = ver
     @debug = false
     @show_all_homes = false
-    @family_ids = family_ids
-    @families = family_ids.inject({}) { |h, id| h[id] = [ ]; h }
+    @home_ids = home_ids
+    @families = home_ids.inject({}) { |h, id| h[id] = [ ]; h }
     @items = { }
     @debug_msgs = [ ]
   end
@@ -659,18 +660,18 @@ class Directory
   # whole phone book
   def add_preview_data()
     @show_all_homes = true
-    @family_ids.each do |base_family_id| 
-      print "processing #{base_family_id}...\n"
-      related_families = get_families(base_family_id)
+    @home_ids.each do |base_home_id| 
+      print "processing #{base_home_id}...\n"
+      related_families = get_families(base_home_id)
       related_families.each do | name, family |
         family.prepare_for_output
         highest = family.load_cells('cust', 0, false)
         highest = family.load_cells('nc', highest, false)
         oldest_sib_first_name = family.cells[3]
-        di = DirectoryItem.new(family.primary_family_id,
-          family.secondary_family_id, family.cells, highest)
+        di = DirectoryItem.new(family.primary_home_id,
+          family.secondary_home_id, family.cells, highest)
         @items["#{name}:d:#{oldest_sib_first_name}"] = di
-        @families[base_family_id].push(di)
+        @families[base_home_id].push(di)
         family.see_also_refs.each do | ref, last |
           seealso = ref.split(',', 2)[0].upcase
           di = DirectoryItem.new(0, 0, { ref => last }, -1)
@@ -683,7 +684,7 @@ class Directory
   # single family only
   def to_html
     s = ''
-    families = get_families(@family_id[0])
+    families = get_families(@home_ids[0])
     if @debug
       s << "<p>Debugging:<br/>" + @debug_msgs.join("<br/>") + "</p>"
     end
@@ -691,7 +692,7 @@ class Directory
     families.keys.sort.each do | name |
       family = families[name]
       family.prepare_for_output
-      s << family.to_html_table_rows(@family_id)
+      s << family.to_html_table_rows
     end
     s << "</table>"
     s
@@ -700,7 +701,7 @@ class Directory
   # single family only
   def to_s
     s = ''
-    families = get_families(@family_id[0])
+    families = get_families(@home_ids[0])
     families.keys.sort.each do | name |
       family = families[name]
       family.prepare_for_output
@@ -710,21 +711,21 @@ class Directory
     s
   end
 
-  def get_all_related_students(base_family_id)
-     students = { }
-     new_students = Directory.add_students_with_home_id(base_family_id, students) 
-     sanity = 100 
+  def get_all_related_students(base_home_id)
+    students = { }
+    new_students = Directory.add_students_with_home_id(base_home_id, students) 
+    sanity = 100 
     while sanity > 0 && !new_students.nil?
       next_students = { }
       new_students.each do | key, record |
-        family_id = record['home_id'] 
-        next1_students = Directory.add_students_with_home_id(family_id, students)
+        home_id = record['home_id'] 
+        next1_students = Directory.add_students_with_home_id(home_id, students)
         if !next1_students.nil? 
           next_students.merge!(next1_students)
           students.merge!(next1_students) 
         end
-        family_id = record['home2_id'] 
-        next1_students = Directory.add_students_with_home_id(family_id, students)
+        home_id = record['home2_id'] 
+        next1_students = Directory.add_students_with_home_id(home_id, students)
         if !next1_students.nil? 
           next_students.merge!(next1_students)
           students.merge!(next1_students) 
@@ -736,9 +737,9 @@ class Directory
     students 
   end
   
-  def get_families(base_family_id)
+  def get_families(base_home_id)
     families =  { }
-    students = get_all_related_students(base_family_id)
+    students = get_all_related_students(base_home_id)
 
     # figure out whether to show secondary parents for a given last name
     last_name_h2 = { }
@@ -746,7 +747,7 @@ class Directory
     students.keys.sort.each do | key |
       last_name = key.split(':', 2)[0]
       student = students[key]
-      show_home2 = @show_all_homes || (student.home2_id == base_family_id)
+      show_home2 = @show_all_homes || (student.home2_id == base_home_id)
       if show_home2 || !last_name_h2.has_key?(last_name)
         last_name_h2[last_name] = show_home2
       end
@@ -770,7 +771,7 @@ class Directory
   class << self
     def output_merge(file_name, debug=false)
       @debug = debug
-      home_ids = Family.home_ids
+      home_ids = Family.home_ids(@version)
       
       # debugging, just pick 20
       home_ids = home_ids.slice(0, 20) if @debug
@@ -781,7 +782,8 @@ class Directory
       f = File.new(file_name, 'wb')
       d.families.keys.sort.each do |home_id|
         fam = nil
-        fam = Family.find_by_home_id(home_id) if home_id != 0
+        fam = @version.families.find(:first, 
+          :conditions => ["home_id=?", home_id]) if home_id != 0
         ln = fam.nil? ? nil : fam.last_name
         addr = fam.nil? ? nil : fam.mailing_address
         addr = [ '', '', '', '', '' ] if addr.nil?
@@ -823,7 +825,7 @@ class Directory
     
     def output_text(file_name, debug=false, family_sep="\f---\n", see_also_sep="\n---\n")
       @debug = debug
-      home_ids = Family.home_ids
+      home_ids = Family.home_ids(@version)
       
       # debugging, just pick 20
       home_ids = home_ids.slice(0, 20) if @debug
@@ -863,7 +865,7 @@ class Directory
         other_ids = other_students.values.collect { | rec | rec['student_number'] }
         cond = "student_number NOT IN (#{other_ids.join(',')}) AND (#{cond})"
       end
-      students = Student.find(:all, :conditions => cond)
+      students = @version.students.find(:all, :conditions => cond)
       if students.nil? || students.size == 0
         return nil
       end

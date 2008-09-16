@@ -1,0 +1,67 @@
+<% form_for(@search) do |f| %>
+<fieldset>
+<legend>Search events</legend>
+
+<% f.fields_for(@search.conditions) do |event| %>
+
+Last Name:<br />
+<%= event.text_field :record_summary_contains %><br />
+
+Description:<br />
+<%= event.text_field :description_contains %><br />
+
+Field Name:<br />
+<%= event.text_field :table_column_contains %><br />
+
+Value:<br />
+<%= event.text_field :table_row_value_contains %><br />
+<% end %>
+
+</fieldset>
+<%= f.submit "Search" %>
+<% end %>
+
+<% if @events_count > 0 %>
+<h1>Listing <%= @events_count %> events</h1>
+
+<table>
+  <tr>
+    <td><%= order_by_link :event_type %></td>
+    <td><%= order_by_link :table_row_type %></td>
+    <td><%= order_by_link :description %></td>
+    <td><%= order_by_link :record_summary %></td>
+    <td><%= order_by_link :table_column %></td>
+    <td><%= order_by_link :table_row_value %></td>
+    <td><%= order_by_link :related_column %></td>
+    <td><%= order_by_link :related_row_value %></td>
+    <td colspan="3">Actions</td>
+  </tr>
+
+<% for event in @events %>
+  <tr>
+    <td><%= event.event_type %></td>
+    <td><%= event.table_row_type %></td>
+    <td><%= event.description %></td>
+    <td><%= event.record_summary %></td>
+    <td><%= event.table_column %></td>
+    <td><%= event.table_row_value %></td>
+    <td><%= event.related_column %></td>
+    <td><%= event.related_row_value %></td>
+    <td><%= link_to 'Show', event %></td>
+    <td><%= link_to 'Edit', edit_event_path(event) %></td>
+    <td><%= link_to 'Destroy', event, :confirm => 'Are you sure?', :method => :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<p>Per page: <%= per_page_select %></p>
+<% if @search.page_count > 1 %>
+<p>Page: <%= page_select %></p>
+<% end %>
+<% else %>
+<p>No events found</p>
+<% end %>
+
+<br />
+
+<%= link_to 'New event', new_event_path %>

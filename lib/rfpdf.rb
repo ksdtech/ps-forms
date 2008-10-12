@@ -44,7 +44,7 @@ class RegFormPDF < FPDF
       order = 'last_name,first_name' if order.blank?
       conds = [ 'schoolid=?', school_id ]
       slice_start = 0
-      slice_len = 50     
+      slice_len = 100
       st_slice = ver.students.find(:all, :conditions => conds,
         :order => order, :offset => slice_start, :limit => slice_len)
       while !st_slice.empty?
@@ -1085,7 +1085,7 @@ class RegFormPDF < FPDF
       school = 'Kent Middle'
     end
     RotatedText(90, 48, 582, "SCHOOL: #{school}")
-    RotatedText(90, 48, 366, "STUDENT: #{student.last_name}, #{student.first_name} (#{student.display_grade_level})")
+    RotatedText(90, 48, 366, "STUDENT: #{student.last_name}, #{student.first_name} (#{student.display_grade_level}) HR #{student.home_room}")
   end
     
   def emergency_form_page_2(student)

@@ -1,7 +1,7 @@
 class CreateFamilyStudents < ActiveRecord::Migration
   def self.up
     create_table :families_students, :force => true do |t|
-      t.integer :version_id
+      t.integer :version_id, :null => false, :default => 0
       t.integer :student_id, :null => false, :default => 0
       t.integer :family_id, :null => false, :default => 0
       t.boolean :primary, :null => false, :default => true

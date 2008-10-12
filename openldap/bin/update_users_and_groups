@@ -1,0 +1,11 @@
+#!/bin/bash
+
+LDAP_HOST="ldap://localhost:389"
+ROOTDN=Manager
+ROOTPW=rootpass
+WORKDIR="../../data"
+
+/opt/local/bin/ldapsearch -H $LDAP_HOST -x -D "cn=$ROOTDN,dc=webauth,dc=kentfieldschools,dc=org" -w $ROOTPW -b "cn=users,dc=webauth,dc=kentfieldschools,dc=org" '(objectClass=inetOrgPerson)' dn | grep '^dn:' | cut -c '5-' >"$WORKDIR/old-users.ldif"
+/opt/local/bin/ldapdelete  -H $LDAP_HOST -c -x -D "cn=$ROOTDN,dc=webauth,dc=kentfieldschools,dc=org" -w $ROOTPW  -f "$WORKDIR/old-users.ldif"
+/opt/local/bin/ldapadd -H $LDAP_HOST -c -x -D "cn=$ROOTDN,dc=webauth,dc=kentfieldschools,dc=org" -w $ROOTPW  -f "$WORKDIR/users.ldif"
+/opt/local/bin/ldapmodify -H $LDAP_HOST -c -x -D "cn=$ROOTDN,dc=webauth,dc=kentfieldschools,dc=org" -w $ROOTPW -f "$WORKDIR/groups.ldif"

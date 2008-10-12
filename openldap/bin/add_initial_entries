@@ -1,0 +1,4 @@
+#!/bin/bash
+
+ROOTDN=Manager
+/opt/local/bin/ldapadd -x -D "cn=$ROOTDN,dc=webauth,dc=kentfieldschools,dc=org" -W -f ../../data/init.ldif

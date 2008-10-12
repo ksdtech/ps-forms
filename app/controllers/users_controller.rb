@@ -60,7 +60,15 @@ class UsersController < ApplicationController
     @user = User.find(params[:id])
 
     respond_to do |format|
-      if @user.update_attributes(params[:user])
+      aok = true
+      new_password = params[:user][:password]
+      if @user.will_change_password(new_password)
+        if !@user.ldap_change_password(new_password)
+          @user.errors.add(:password)
+          aok = false
+        end
+      end
+      if aok && @user.update_attributes(params[:user])
         flash[:notice] = 'User was successfully updated.'
         format.html { redirect_to(@user) }
         format.xml  { head :ok }

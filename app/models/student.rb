@@ -17,13 +17,134 @@ class Student < ActiveRecord::Base
   validates_numericality_of :enroll_status, :on => :create, :only_integer => true
   validates_numericality_of :home_id, :on => :create, :only_integer => true, :greater_than => 0
   
+  def full_name
+    "#{first_name} #{last_name}".strip
+  end
+
+  def display_grade_level
+    grade_level == 0 ? 'K' : grade_level.to_s
+  end
+  
+  def display_72_hour_meds
+    emergency_meds ? "See 72-hour medication form" : "No 72-hour form submitted"
+  end
+  
+  def to_s
+    "#{last_name}, #{first_name} #{student_number} (#{display_grade_level})"
+  end
+  
+  def reg_year
+    "2008-2009"
+  end
+
+  def short_reg_year
+    "08-09"
+  end
+  
+  PARENT_LAST =  {
+    'mother' => 'mother',
+    'father' => 'father',
+    'mother2' => 'mother2_last',
+    'father2' => 'father2_last' }
+    
+  EMERG_PHONE = {
+    '1' => [ 'emerg_phone_1', 'emerg_1_ptype', 'emerg_1_alt_phone', 'emerg_1_alt_ptype' ],
+    '2' => [ 'emerg_phone_2', 'emerg_2_ptype', 'emerg_2_alt_phone', 'emerg_2_alt_ptype' ],
+    '3' => [ 'emerg_3_phone', 'emerg_3_ptype', 'emerg_3_alt_phone', 'emerg_3_alt_ptype' ],
+    'x' => [ 'emerg_x_phone', 'emerg_x_ptype', 'emerg_x_alt_phone', 'emerg_x_alt_ptype' ],
+  }
+  
+  # method_missing madness to find the legal guardian
+  def guardian_key(except_this, strict)
+    [ 'mother', 'father', 'mother2', 'father2' ].each do |key|
+      if key != except_this && self["#{key}_isguardian"] &&
+        !self[PARENT_LAST[key]].blank? && !self["#{key}_first"].blank?
+        return key
+      end
+    end
+    unless strict
+      [ 'mother', 'father', 'mother2', 'father2' ].each do |key|
+        if key != except_this && 
+          !self[PARENT_LAST[key]].blank? && !self["#{key}_first"].blank?
+          return key
+        end
+      end
+    end
+    nil
+  end
+
+  # find first guardian
+  def g1_key(strict=false)
+    guardian_key(nil, strict)
+  end
+
+  # find first guardian by getting first guardian, then looking again
+  def g2_key(strict=false)
+    guardian_key(g1_key, strict)
+  end
+
+  # changes g1_street to street or home2_street
+  # changes g1_last to mother or father2_last
+  def method_missing(method_id, *arguments)
+    # REMOVE THIS WHEN WE HAVE DOUBLE-CHECKED ALL GUARDIAN DATA
+    strict = false
+    method_name = method_id.id2name
+    if method_name =~ /^g([12])_(.+)$/
+      # call g1_key or g2_key above
+      gkey = ($1 == '1') ? g1_key(strict) : g2_key(strict)
+      return '' if gkey.nil?
+
+      attr_part = $2
+      attr_name = case attr_part
+      when /street|city|state|zip|res_phone/
+        if gkey =~ /2/
+          if attr_part =~ /res_phone/
+            'home2_phone'
+          elsif attr_part =~ /^mailing/
+            attr_part.gsub(/mailing/, 'mailing2')
+          else
+            "home2_#{attr_part}"
+          end
+        else
+          if attr_part =~ /res_phone/
+            'home_phone'
+          else
+            attr_part
+          end
+        end
+      when /last/
+        PARENT_LAST[gkey]
+      else
+        "#{gkey}_#{attr_part}"
+      end
+      return self[attr_name]
+    elsif method_name =~ /^e([123x])_(home|work|cell)(_phone)?$/
+      ptype = $2
+      phone_list = EMERG_PHONE[$1]
+      i = 0
+      while i < phone_list.size do
+        this_ptype = self[phone_list[i+1]]
+        if !this_ptype.blank? && this_ptype.downcase == ptype
+          return self[phone_list[i]]
+        end
+        i += 2
+      end
+      return ''
+    end
+    super
+  end
+  
   def validate_all(av)
+    validate_user
     validate_home_fields
     validate_guardianemail
     validate_parent_emails(av)
     validate_parent_phones
   end
   
+  def validate_user
+  end
+
   def validate_home_fields
     home_fields_required = [ 'web_id', 'web_password',
       'street', 'city', 'state', 'zip',
@@ -194,25 +315,13 @@ class Student < ActiveRecord::Base
     p_emails.keys
   end
 
-  def full_name
-    "#{first_name} #{last_name}".strip
-  end
-
-  def pretty_grade_level
-    grade_level == 0 ? 'K' : grade_level.to_s
-  end
-  
-  def to_s
-    "#{last_name}, #{first_name} #{student_number} (#{pretty_grade_level})"
-  end
-  
   def add_to_family(home_id, primary,
       username, password,
       street, city, state, zip,
       mailing_street, mailing_city, mailing_state, mailing_zip,
       home_phone)
     puts "#{self.student_number} add_to_family #{home_id}"
-    f = families.find(:first, :conditions => ["home_id=?", home_id])
+    f = version.families.find(:first, :conditions => ["home_id=?", home_id])
     if f.nil?
       f = version.families.build(
         :home_id => home_id, 
@@ -239,31 +348,33 @@ class Student < ActiveRecord::Base
     f
   end
   
-  def add_parent(family_id, link, last_name, first_name, emails, phones)
+  def add_parent(family_id, link, staff_id, last_name, first_name, emails, phones)
     return if last_name.blank? || first_name.blank?
     home_number, parent_number = link.split(/_/)
-    p = parents.find(:first, 
+    par = version.parents.find(:first, 
       :conditions => ["family_id=? AND parent_number=?", family_id, parent_number])
-    if p.nil?
-      puts "adding parent #{first_name} #{last_name}"
-      p = version.parents.build(
+    if par.nil?
+      attrs = { 
         :family_id => family_id,
         :parent_number => parent_number,
         :last_name => last_name,
-        :first_name => first_name)
-      p.save
+        :first_name => first_name }
+      attrs[:staff_id] = staff_id unless staff_id.nil? || staff_id.to_i == 0
+      puts "adding parent #{first_name} #{last_name}"
+      par = version.parents.create(attrs)
     else
-      puts "found parent #{p.first_name} #{p.last_name}"
+      puts "found parent #{par.first_name} #{par.last_name}"
       # check or update parent record?
     end
-    puts "adding parent link #{p.id} #{link}"
+    puts "adding parent link #{par.id} #{link}"
     ps = version.parent_students.build(
       :student_id => self.id,
-      :parent_id => p.id,
+      :parent_id => par.id,
       :link => link)
     ps.save(false)
-    emails.each_with_index { |em, i| p.add_email(em, i==0) }
-    phones.each { |location, phone| p.add_phone(phone, location.to_s) }
+    emails.each_with_index { |em, i| par.add_email(em, i==0) }
+    phones.each { |location, phone| par.add_phone(phone, location.to_s) }
+    par.add_user
   end
   
   class << self
@@ -274,10 +385,12 @@ class Student < ActiveRecord::Base
     
     # The file students.txt is created with Names-Families-All-Contact-Info 
     # export template.
-    def import(ver=nil, fname='students.txt')
+    def import(ver=nil, fname='students.txt', options={})
+      options = { :students_only => false, :col_sep => "\t", :row_sep => "\n" }.update(options)
       s_count = 0
       fname = File.join(RAILS_ROOT, 'db', fname) unless fname[0,1] == '/'
-      FasterCSV.foreach(fname, :col_sep => "\t", :row_sep => "\n", 
+      UnquotedCSV.foreach(fname, 
+        :col_sep => options[:col_sep], :row_sep => options[:row_sep],
         :headers => true, :header_converters => :symbol) do |row|
         begin
           attrs = row.to_hash
@@ -294,48 +407,54 @@ class Student < ActiveRecord::Base
           attrs[:home2_id] = 0 if attrs[:home2_id].nil?
           puts "new student #{row[:student_number]}"
           student_attrs = attrs.reject { |k, v| !Student.has_attribute?(k) }
-          ver = Version.create if ver.nil?
+          if ver.nil?
+            ver = Version.create
+          elsif ver.is_a?(Fixnum)
+            ver = Version.find(ver)
+          end
           s = ver.students.build(student_attrs)
           s.save
-          if s.home_id != 0
-            family = s.add_to_family(s.home_id, true,
-              attrs[:web_id], 
-              attrs[:web_password],
-              attrs[:street], attrs[:city], attrs[:state], attrs[:zip],
-              attrs[:mailing_street], attrs[:mailing_city], attrs[:mailing_state], attrs[:mailing_zip],
-              attrs[:home_phone]) 
-            s.add_parent(family.id, 'h1_p1', 
-              attrs[:mother], attrs[:mother_first],
-              [ attrs[:mother_email], attrs[:mother_email2] ],
-              { :home => attrs[:mother_home_phone],
-                :work => attrs[:mother_work_phone],
-                :cell => attrs[:mother_cell_phone] })
-            s.add_parent(family.id, 'h1_p2', 
-              attrs[:father], attrs[:father_first],
-              [ attrs[:father_email], attrs[:father_email2] ],
-              { :home => attrs[:father_home_phone],
-                :work => attrs[:father_work_phone],
-                :cell => attrs[:father_cell_phone] })
-          end
-          if s.home2_id != 0
-            family = s.add_to_family(s.home2_id, false,
-              attrs[:web_id], 
-              attrs[:web_password],
-              attrs[:home2_street], attrs[:home2_city], attrs[:home2_state], attrs[:home2_zip],
-              attrs[:mailing2_street], attrs[:mailing2_city], attrs[:mailing2_state], attrs[:mailing2_zip],
-              attrs[:home2_phone]) 
-            s.add_parent(family.id, 'h2_p1', 
-              attrs[:mother2_last], attrs[:mother2_first], 
-              [ attrs[:mother2_email], attrs[:mother2_email2] ],
-              { :home => attrs[:mother2_home_phone],
-                :work => attrs[:mother2_work_phone],
-                :cell => attrs[:mother2_cell_phone] })
-            s.add_parent(family.id, 'h2_p2', 
-              attrs[:father2_last], attrs[:father2_first],
-              [ attrs[:father2_email], attrs[:father2_email2] ],
-              { :home => attrs[:father2_home_phone],
-                :work => attrs[:father2_work_phone],
-                :cell => attrs[:father2_cell_phone] })
+          if !options[:students_only]
+            if s.home_id != 0
+              family = s.add_to_family(s.home_id, true,
+                attrs[:web_id], 
+                attrs[:web_password],
+                attrs[:street], attrs[:city], attrs[:state], attrs[:zip],
+                attrs[:mailing_street], attrs[:mailing_city], attrs[:mailing_state], attrs[:mailing_zip],
+                attrs[:home_phone]) 
+              s.add_parent(family.id, 'h1_p1', attrs[:mother_staff_id],
+                attrs[:mother], attrs[:mother_first],
+                [ attrs[:mother_email], attrs[:mother_email2] ],
+                { :home => attrs[:mother_home_phone],
+                  :work => attrs[:mother_work_phone],
+                  :cell => attrs[:mother_cell_phone] })
+              s.add_parent(family.id, 'h1_p2', attrs[:father_staff_id],
+                attrs[:father], attrs[:father_first],
+                [ attrs[:father_email], attrs[:father_email2] ],
+                { :home => attrs[:father_home_phone],
+                  :work => attrs[:father_work_phone],
+                  :cell => attrs[:father_cell_phone] })
+            end
+            if s.home2_id != 0
+              family = s.add_to_family(s.home2_id, false,
+                attrs[:web_id], 
+                attrs[:web_password],
+                attrs[:home2_street], attrs[:home2_city], attrs[:home2_state], attrs[:home2_zip],
+                attrs[:mailing2_street], attrs[:mailing2_city], attrs[:mailing2_state], attrs[:mailing2_zip],
+                attrs[:home2_phone]) 
+              s.add_parent(family.id, 'h2_p1', attrs[:mother2_staff_id],
+                attrs[:mother2_last], attrs[:mother2_first],
+                [ attrs[:mother2_email], attrs[:mother2_email2] ],
+                { :home => attrs[:mother2_home_phone],
+                  :work => attrs[:mother2_work_phone],
+                  :cell => attrs[:mother2_cell_phone] })
+              s.add_parent(family.id, 'h2_p2', attrs[:father2_staff_id],
+                attrs[:father2_last], attrs[:father2_first], 
+                [ attrs[:father2_email], attrs[:father2_email2] ],
+                { :home => attrs[:father2_home_phone],
+                  :work => attrs[:father2_work_phone],
+                  :cell => attrs[:father2_cell_phone] })
+            end
           end
           s_count += 1
           # break if s_count == 20
@@ -345,6 +464,8 @@ class Student < ActiveRecord::Base
       end
       
       Family.rebuild_last_names(ver)
+      Parent.rebuild_user_roles(ver)
+      ver.id
     end
     
     def homeroom_password_letters(ver=nil, coll=nil, fname='letters.pdf')

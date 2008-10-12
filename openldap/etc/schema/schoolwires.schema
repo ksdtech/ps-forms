@@ -1,0 +1,14 @@
+## oid namespace is from kerio-mailserver.schema
+## uniqueMember attribute is from core.schema
+
+attributetype ( 1.3.6.1.4.1.10311.1.2.2.51
+	NAME 'swUserRole'
+	DESC 'Unique role granted to a user'
+	EQUALITY uniqueMemberMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.34 )
+
+objectclass ( 1.3.6.1.4.1.10311.2.2.2.3
+	NAME 'schoolwiresUser'
+	AUXILIARY
+	SUP top
+	MAY ( swUserRole ) )

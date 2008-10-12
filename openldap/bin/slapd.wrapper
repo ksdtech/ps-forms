@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# MacPorts generated daemondo support script
+#
+
+#
+# Init
+#
+prefix=/opt/local
+PID=/opt/local/var/run/slapd.pid
+
+#
+# Start
+#
+Start()
+{
+	/opt/local/libexec/slapd -u ldap -f /opt/local/etc/openldap/slapd.conf
+}
+
+#
+# Stop
+#
+Stop()
+{
+	[ -r ${PID} ] && kill $(cat ${PID})
+}
+
+#
+# Restart
+#
+Restart()
+{
+	Stop
+	Start
+}
+
+#
+# Run
+#
+Run()
+{
+case $1 in
+  start  ) Start   ;;
+  stop   ) Stop    ;;
+  restart) Restart ;;
+  *      ) echo "$0: unknown argument: $1";;
+esac
+}
+
+#
+# Run a phase based on the selector
+#
+Run $1
+

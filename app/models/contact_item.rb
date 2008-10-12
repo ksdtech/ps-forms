@@ -2,6 +2,8 @@ class ContactItem < ActiveRecord::Base
   belongs_to :version
   has_many :parent_contact_items
   has_many :parents, :through => :parent_contact_items
+  has_many :employee_contact_items
+  has_many :employees, :through => :employee_contact_items
   
 end
 

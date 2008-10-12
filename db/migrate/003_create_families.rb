@@ -1,7 +1,7 @@
 class CreateFamilies < ActiveRecord::Migration
   def self.up
     create_table :families, :force => true do |t|
-      t.integer :version_id
+      t.integer :version_id, :null => false, :default => 0
       t.integer :home_id, :null => false, :default => 0
       t.string  :last_name
       t.string  :powerschool_password

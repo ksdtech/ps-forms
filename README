@@ -1,22 +1,27 @@
-ksf-directory project
+ps-on-rails project
 
-Builds a tab-delimited text file for printing,
-or a specially-delimited text file for use with Microsoft Word's
-mail merge.
+Add-ons to PowerSchool
 
-See the database schema for the students table for the fields to be used in 
-the PowerSchool tab-delimited export file that is used to create the
-database.  
+1. To print the family school directory, use these rake tasks:
 
-Create (or re-create) the database use the Rails console to call
+rake import:all
+rake directory:text or rake directory:merge
 
-Student.import
+directory:text builds a tab-delimited text file for printing,
+directory:merge builds a specially-delimited text file for 
+use with Microsoft Word's mail merge.
 
-Once the database has been created, use the Rails console to call
+2. To generate ldif files for use with SchoolWires, use:
 
-Directory.output_text, or
-Directory.output_merge
+rake import:all
+rake ldif:dump_all
 
-to write the output files.
+Then use the update_usera_and_groups shell script to update the 
+OpenLDAP server database.
+
+3. To generate pdf registration and emergency contact forms, use:
+
+rake import:all
+rake pdf:emerg_bacich or rake pdf:emerg_kent
 
 

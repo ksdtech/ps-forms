@@ -1,3 +1,7 @@
-
+<p>
+  Name: <%=h @user.first_name %> <%=h @user.last_name %><br />
+  Username: <%=h @user.username %><br />
+  Email: <%=h @user.email %><br />
+</p>
 <%= link_to 'Edit', edit_user_path(@user) %> |
 <%= link_to 'Back', users_path %>

@@ -1,0 +1,9 @@
+dn: dc=webauth,dc=kentfieldschools,dc=org
+objectclass: dcObject
+objectclass: organization
+o: Kentfield Schools Authentication
+dc: webauth
+
+dn: cn=Manager,dc=webauth,dc=kentfieldschools,dc=org
+objectclass: organizationalRole
+cn: Manager

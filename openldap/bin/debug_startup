@@ -1,0 +1,4 @@
+#!/bin/bash
+
+sudo /opt/local/libexec/slapd -u ldap -f /opt/local/etc/openldap/slapd.conf -d 255
+

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+/usr/bin/sudo -u ldap /opt/local/sbin/slapcat -f /opt/local/etc/openldap/slapd.conf -l ../../data/webauth-dump.ldif

@@ -10,6 +10,9 @@ RAILS_GEM_VERSION = '2.1.1' unless defined? RAILS_GEM_VERSION
 # Bootstrap the Rails environment, frameworks, and default configuration
 require File.join(File.dirname(__FILE__), 'boot')
 
+# Private application configuration parameters
+require File.join(File.dirname(__FILE__), 'app_config')
+
 Rails::Initializer.run do |config|
   # Settings in config/environments/* take precedence over those specified here.
   # Application configuration should go into files in config/initializers
@@ -58,9 +61,10 @@ Rails::Initializer.run do |config|
   # config.active_record.default_timezone = :utc
 end
 
-require 'fastercsv'
+require 'faster_csv'
+require 'unquoted_csv'
 require 'nil_utils'
 require 'directory_listing'
 require 'prawn'
 require 'aggregate_validation'
-
+require 'rfpdf'

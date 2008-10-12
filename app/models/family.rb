@@ -83,7 +83,7 @@ class Family < ActiveRecord::Base
       version.students.each do |s|
         pdf.move_down 14
         pdf.font 'Helvetica-Bold'
-        pdf.text "Login for #{s.full_name} (#{s.pretty_grade_level})"
+        pdf.text "Login for #{s.full_name} (#{s.display_grade_level})"
         pdf.font 'Helvetica'
         pdf.text "Username: #{username_for_student(s.id)}"
         pdf.text "Password: #{powerschool_password}"
@@ -97,7 +97,8 @@ class Family < ActiveRecord::Base
       ver.families.collect { |f| f.home_id }.uniq
     end
     
-    def rebuild_last_names(ver)
+    def rebuild_last_names(ver=nil)
+      ver = Version.current if ver.nil?
       puts "rebuilding last names"
       ver.families.each { |fam| fam.rebuild_last_name }
     end

@@ -1,7 +1,7 @@
 class CreateContactItems < ActiveRecord::Migration
   def self.up
     create_table :contact_items, :force => true do |t|
-      t.integer :version_id
+      t.integer :version_id, :null => false, :default => 0
       t.string  :contact_type, :null => false
       t.string  :location
       t.boolean :primary, :null => false, :default => false

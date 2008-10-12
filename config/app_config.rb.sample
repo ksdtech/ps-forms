@@ -1,0 +1,5 @@
+APP_CONFIG = {
+  :parent_temp_password => 'newpass',
+  :ldap_basedn => "dc=webauth,dc=kentfieldschools,dc=org",
+  :ldap_modify => "/opt/local/bin/ldapmodify -H -D 'cn=Manager,dc=webauth,dc=kentfieldschools,dc=org' -x -w 'rootpass'"
+}

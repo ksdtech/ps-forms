@@ -388,7 +388,7 @@ class Student < ActiveRecord::Base
     def import(ver=nil, fname='students.txt', options={})
       options = { :students_only => false, :col_sep => "\t", :row_sep => "\n" }.update(options)
       s_count = 0
-      fname = File.join(RAILS_ROOT, 'db', fname) unless fname[0,1] == '/'
+      fname = File.join(RAILS_ROOT, 'data', fname) unless fname[0,1] == '/'
       UnquotedCSV.foreach(fname, 
         :col_sep => options[:col_sep], :row_sep => options[:row_sep],
         :headers => true, :header_converters => :symbol) do |row|

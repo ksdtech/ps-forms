@@ -1,4 +1,4 @@
-namespace directory do
+namespace :directory do
   desc "build a tab-delimited text directory for printing"
   task :text => :environment do
     Directory.output_text

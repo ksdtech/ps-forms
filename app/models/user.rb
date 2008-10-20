@@ -69,8 +69,12 @@ class User < ActiveRecord::Base
     "#{first_name} #{last_name}".strip
   end
   
-  def ldif_roles
+  def sw_roles
     roles.collect { |r| r.id.to_s }.join("*")
+  end
+  
+  def ldif_description
+    access_type.blank? ? 'user' : access_type
   end
   
   def ldif_employee_type
@@ -98,7 +102,7 @@ class User < ActiveRecord::Base
     "objectclass: inetOrgPerson\n" +
     "objectclass: schoolwiresUser\n" + 
     "uid: #{username}\n" +
-    "description: #{ldif_roles}\n" +
+    "description: #{ldif_description}\n" +
     "employeeType: #{ldif_employee_type}\n" +
     "cn: #{full_name}\n" +
     "givenName: #{first_name}\n" +

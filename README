@@ -11,12 +11,12 @@ directory:text builds a tab-delimited text file for printing,
 directory:merge builds a specially-delimited text file for 
 use with Microsoft Word's mail merge.
 
-2. To generate ldif files for use with SchoolWires, use:
+2. To generate ldif files for use with Schoolwires, use:
 
 rake import:all
 rake ldif:dump_all
 
-Then use the update_usera_and_groups shell script to update the 
+Then use the update_users_and_groups shell script to update the 
 OpenLDAP server database.
 
 3. To generate pdf registration and emergency contact forms, use:

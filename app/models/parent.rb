@@ -121,8 +121,8 @@ class Parent < ActiveRecord::Base
     end
   end
     
-  def rebuild_user_roles
-    u = find_user
+  def rebuild_user_roles(u = nil)
+    u ||= find_user
     if !u.nil?
       parent_roles = u.user_roles.find(:all, :conditions => 
         ["role_id in (?)", User.all_parent_roles])

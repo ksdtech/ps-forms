@@ -345,6 +345,7 @@ class Student < ActiveRecord::Base
       :powerschool_username => username,
       :primary => primary)
     fs.save(false)
+    fs.add_user
     f
   end
   
@@ -374,7 +375,44 @@ class Student < ActiveRecord::Base
     ps.save(false)
     emails.each_with_index { |em, i| par.add_email(em, i==0) }
     phones.each { |location, phone| par.add_phone(phone, location.to_s) }
-    par.add_user
+  end
+  
+  def username
+    network_id
+  end
+  
+  def password
+    network_password
+  end
+
+  def find_user
+    username.blank? ? nil : User.find(:first, :conditions => ['username=?', username])
+  end
+  
+  def add_user
+    if username.blank? || password.blank?
+      puts "no username/password for student #{full_name}"
+    else
+      u = find_user
+      if !u.nil?
+        puts "already have a user for student #{full_name}: username #{u.username}"
+      else
+        begin
+          u = User.create(:email => "#{username}\@kentstudents.org",
+            :student_number => student_number,
+            :username => username,
+            :password => password,
+            :first_name => first_name,
+            :last_name => last_name,
+            :access_type => 'student')
+          u.save
+          ur = u.user_roles.build(:role_id => 108)
+          ur.save
+        rescue
+          puts "failed to add user for student #{full_name}: #{$!}"
+        end
+      end
+    end
   end
   
   class << self
@@ -456,6 +494,7 @@ class Student < ActiveRecord::Base
                   :cell => attrs[:father2_cell_phone] })
             end
           end
+          s.add_user
           s_count += 1
           # break if s_count == 20
         rescue
@@ -463,8 +502,18 @@ class Student < ActiveRecord::Base
         end
       end
       
+      # update last names for directory
+      puts "rebuilding last names for directory..."
       Family.rebuild_last_names(ver)
+      
+      # this must be run *after* staff and student usernames are recorded
+      puts "adding parent schoolwires users..."
+      ver.parents.each do |par| 
+        par.add_user
+      end
       Parent.rebuild_user_roles(ver)
+      
+      # return the version id
       ver.id
     end
     

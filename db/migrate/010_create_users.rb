@@ -9,6 +9,7 @@ class CreateUsers < ActiveRecord::Migration
       t.integer :home_id
       t.integer :staff_id
       t.integer :student_number
+      t.string  :access_type
       t.timestamps
     end
     

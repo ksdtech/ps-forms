@@ -20,5 +20,26 @@
     <%= f.label :password %><br />
     <%= f.text_field :password %>
   </p>
+<% if current_user.is_admin? %>
+<p>
+  <%= f.label :home_id %><br />
+  <%= f.text_field :home_id %>
+</p>
+<p>
+  <%= f.label :staff_id %><br />
+  <%= f.text_field :staff_id %>
+</p>
+<p>
+  <%= f.label :student_number %><br />
+  <%= f.text_field :student_number %>
+</p>
+<p>
+  <%= f.label :access_type %><br />
+  <%= f.radio_button :access_type, :user %>
+  <%= f.radio_button :access_type, :student %>
+  <%= f.radio_button :access_type, :primary %>
+  <%= f.radio_button :access_type, :secondary %>
+</p>
+<% end %>
   <p><%= f.submit "Submit" %></p>
 <% end %>

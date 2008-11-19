@@ -1,0 +1,16 @@
+.DS_Store
+db/*.db
+db/schema.rb
+db/*.sqlite3
+db/*.sqlite3-journal
+data
+log/*.log
+tmp/**/*
+config/app_config.rb
+config/app_config.yml
+config/database.yml
+doc/api
+doc/app
+log/*.log
+.loadpath
+*.tmproj

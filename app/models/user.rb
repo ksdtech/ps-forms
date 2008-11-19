@@ -182,17 +182,26 @@ class User < ActiveRecord::Base
       KSDORG_PARENT_ROLES
     end
     
-    def export_sw_users(coll=nil, fname='sw_users.csv')
-      coll = User.find(:all) if coll.nil?
-      File.open(fname, "w") do |f|
-        header = %w{ FirstName LastName UserName Roles Email Password }
-        f.write header.join(',')
-        f.write "\r\n"
+    def export_sw_users(coll=nil, fname='sw_users.csv', exclude_fname=nil)
+      fname = File.join(Rails.root, 'data', fname) unless fname[0, 1] == '/'
+      excluded_users = { }
+      if exclude_fname
+        exclude_fname = File.join(Rails.root, 'data', exclude_fname) unless exclude_fname[0, 1] == '/'
+        FasterCSV.foreach(exclude_fname, 
+          :col_sep => ',', :row_sep => "\r\n",
+          :headers => true, :header_converters => :symbol) do |row|
+            excluded_users[row[:username]] = 1
+        end
+      end
+      coll = User.find(:all, :conditions => ['access_type IS NULL']) if coll.nil?
+      FasterCSV.open(fname, "w", :col_sep => ',', :row_sep => "\r\n",
+        :force_quotes => true, :headers => :first_row) do |f|
+        f << %w{ FirstName LastName UserName Roles Email Password }
         coll.each do |u|
-          roles = u.roles.collect { |r| r.id }
-          row = [u.first_name, u.last_name, u.username, roles.join("*"), u.email, u.password ]
-          f.write row.join(',')
-          f.write "\r\n"
+          if excluded_users[u.username].nil?
+            roles = u.roles.collect { |r| r.id }
+            f << [ u.first_name, u.last_name, u.username, roles.join("*"), u.email, u.password ]
+          end
         end
       end
     end

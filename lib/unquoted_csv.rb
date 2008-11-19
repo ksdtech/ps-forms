@@ -1,4 +1,4 @@
-require 'faster_csv'
+require 'fastercsv'
 
 class UnquotedCSV < FasterCSV
   # Pre-compiles parsers and stores them by name for access during reads.

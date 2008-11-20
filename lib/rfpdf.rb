@@ -410,12 +410,12 @@ class RegFormPDF < FPDF
     new_page(student, 'P')
     # header
     banner_at(50, "Kentfield School District Registraton Form for #{student.reg_year} School Year")
-    newline_at(132)
+    newline_at(100)
     txt(316, "Grade level that student will be entering in August #{student.short_reg_year}")
     tbx(552, fmt_select(SHORT_GRADE_LEVEL_OPTIONS, student.grade_level), 24)   
     # student info
-    banner_at(156, '1. Student Identification')
-    newline_at(172)
+    banner_at(124, '1. Student Identification')
+    newline_at(140)
     txt(40, "Student's legal name as it appears on birth certificate or passport.")
     newline
     txt(40, 'Last')
@@ -424,11 +424,12 @@ class RegFormPDF < FPDF
     tbx(198, student.first_name)
     txt(324, 'Middle')
     tbx(354, student.middle_name)
-    newline
+    banner_at(180, '2a. Name and Birth Information')
+    newline_at(200)
     txt(40, "Student's suffix if applicable")
     tbx(160, student.ca_namesuffix)
-    txt(324, "Student's nickname if applicable")
-    tbx(460, student.nickname)
+    txt(312, "Student's nickname if applicable")
+    tbx(450, student.nickname, 126)
     newline
     txt(40, "Date of Birth")
     tbx(94, fmt_date(student.dob))
@@ -443,10 +444,13 @@ class RegFormPDF < FPDF
     tbx(300, student.ca_birthplace_state)
     txt(416, "Country")
     tbx(450, fmt_select(COUNTRY_OPTIONS, student.ca_birthplace_country), 126)
+    banner_at(256, '2b. (Custody Information - See Emergency Card)')   
+    banner_at(272, '2c. (Siblings - See Next Page of This Form)')   
+    
     # residence
-    banner_at(270, '2. Primary Residence')    
-    newline_at(286)
-    txt(40, 'Physical (street) address of primary residence. This address must be within the school district boundary.')
+    banner_at(288, '3a. Qualifying Residence')    
+    newline_at(304)
+    txt(40, 'Physical (street) address of qualifying residence. This address must be within the school district boundary.')
     newline
     txt(40, 'Address')
     tbx(86, student.street, 188)
@@ -479,8 +483,8 @@ class RegFormPDF < FPDF
     cbx(40, student.home_printed_material, 'We request printed school communications')
     cbx(280, student.home_spanish_material, 'We request Spanish language school communications')
     # parent1
-    banner_at(414, 'Mother/Parent/Guardian at Primary Residence')   
-    newline_at(430)
+    banner_at(432, '3b. Mother/Parent/Guardian at Qualifying Residence')   
+    newline_at(448)
     txt(40, "Parent's name and legal status.")
     newline
     txt(40, 'Last')
@@ -525,8 +529,8 @@ class RegFormPDF < FPDF
     txt(450, 'City')
     tbx(470, student.mother_employer_address, 106)
     # parent2
-    banner_at(580, 'Father/Parent/Guardian at Primary Residence')   
-    newline_at(596)
+    banner_at(592, '3c. Father/Parent/Guardian at Qualifying Residence')   
+    newline_at(608)
     txt(40, "Parent's name and legal status.")
     newline
     txt(40, 'Last')
@@ -578,12 +582,36 @@ class RegFormPDF < FPDF
     new_page(student, 'P')
     # header
     reg_form_header(student)
-    # residence
-    banner_at(108, '3. Secondary Residence')
-    newline_at(124)
-    txt(40, 'If this section does not apply, go on to Section 4.  Reportcards and other correspondance will also be sent to this address.')
+    # siblings
+    banner_at(100, '2c. Siblings')
+    newline_at(116)
+    txt(40, 'For planning purposes, please list the names and birthdates of any siblings who may enter Bacich or Kent in future years.')
     newline
-    txt(40, 'Physical (street) address of secondary residence.')
+    txt(40, 'First Name')
+    tbx(100, student.sibling1_name)
+    txt(250, 'Date of Birth')
+    tbx(310, fmt_date(student.sibling1_dob))
+    newline
+    txt(40, 'First Name')
+    tbx(100, student.sibling2_name)
+    txt(250, 'Date of Birth')
+    tbx(310, fmt_date(student.sibling2_dob))
+    newline
+    txt(40, 'First Name')
+    tbx(100, student.sibling3_name)
+    txt(250, 'Date of Birth')
+    tbx(310, fmt_date(student.sibling3_dob))
+    newline
+    txt(40, 'First Name')
+    tbx(100, student.sibling4_name)
+    txt(250, 'Date of Birth')
+    tbx(310, fmt_date(student.sibling4_dob))
+    # residence
+    newline_at(216)
+    txt(40, 'If the next section does not apply, go on to the next page.  Report cards and other correspondance will also be sent to this address.')
+    banner_at(232, '4a. Additional Residence')
+    newline_at(248)
+    txt(40, 'Physical (street) address of additional residence.')
     newline
     txt(40, 'Address')
     tbx(86, student.home2_street, 188)
@@ -616,8 +644,8 @@ class RegFormPDF < FPDF
     cbx(40, student.home2_printed_material, 'We request printed school communications')
     cbx(280, student.home2_spanish_material, 'We request Spanish language school communications')
     # parent1
-    banner_at(270, 'Mother/Parent/Guardian at Secondary Residence')   
-    newline_at(286)
+    banner_at(376, '4b. Mother/Parent/Guardian at Additional Residence')   
+    newline_at(392)
     txt(40, "Parent's name and legal status.")
     newline
     txt(40, 'Last')
@@ -662,8 +690,8 @@ class RegFormPDF < FPDF
     txt(450, 'City')
     tbx(470, student.mother2_employer_address, 106)
     # parent2
-    banner_at(436, 'Father/Parent/Guardian at Secondary Residence')   
-    newline_at(452)
+    banner_at(536, '4c. Father/Parent/Guardian at Additional Residence')   
+    newline_at(552)
     txt(40, "Parent's name and legal status.")
     newline
     txt(40, 'Last')
@@ -707,6 +735,7 @@ class RegFormPDF < FPDF
     tbx(232, student.father2_employer, 204)
     txt(450, 'City')
     tbx(470, student.father2_employer_address, 106)
+    # parent2
     # footer
     reg_form_footer
   end
@@ -715,10 +744,11 @@ class RegFormPDF < FPDF
     new_page(student, 'P')
     # header
     reg_form_header(student)
+    banner_at(100, '5. (Emergency Contacts - See Emergency Card)')   
     # prev school
-    banner_at(108, '4. Previous School Enrollment')   
-    newline_at(124)
-    txt(40, "Please provide information about the last school attended, if any, and sign the permission.")
+    banner_at(116, '6a. Previous School Enrollment')   
+    newline_at(132)
+    txt(40, "Please provide information about the last school attended, if any, and sign the permission in section 9a. of this form.")
     newline
     txt(40, 'Name')
     tbx(66, student.previous_school_name)
@@ -737,13 +767,6 @@ class RegFormPDF < FPDF
     tbx(258, fmt_date(student.ca_firstusaschooling))
     txt(372, 'In a K-8 California school')
     tbx(476, fmt_date(student.schoolentrydate_ca))
-    newline
-    txt(40, 'I hereby grant permission to the Kentfield School District to contact my', 4)
-    txt(336, 'Parent(s) /', 4)
-    newline(10)
-    txt(40, "child's previous school regarding recommendations for placement.", 4)
-    txt(336, 'Guardian(s) signature', 4)
-    tbx(420, '', 156, 20)
     # programs
     # banner_at(228, '5. Other Programs')
     # newline_at(244)
@@ -753,8 +776,8 @@ class RegFormPDF < FPDF
     # cbx(140, student.prog_rsp, 'Resource Special Program')   
     # cbx(294, student.prog_eld, 'English Language Learning Program')   
     # ethnicity
-    banner_at(284, '6. State-Required Demographics: Ethnicity')
-    newline_at(300)
+    banner_at(208, '6b. State-Required Demographics: Ethnicity')
+    newline_at(224)
     txt(40, 'Primary ethnicity (check one):')
     txt(294, 'Other ethnicities (check all applicable):')
     newline
@@ -805,8 +828,8 @@ class RegFormPDF < FPDF
     cbx(40, student.ethnicity == '299', 'Other Asian')    
     cbx(294, student.ca_ethnaspioa, 'Other Asian')    
     # parent education
-    banner_at(484, '7. State-Required Demographics: Parent Educational Level')
-    newline_at(500)
+    banner_at(408, '6c. State-Required Demographics: Parent Educational Level')
+    newline_at(424)
     txt(40, "Check the box corresponding to the highest educational level achieved by any of the student's parents.")
     newline
     cbx(40, student.ca_parented == '14', 'Not a high school graduate')   
@@ -815,33 +838,33 @@ class RegFormPDF < FPDF
     newline(16)
     cbx(40, student.ca_parented == '13', 'High school graduate')   
     cbx(186, student.ca_parented == '11', 'College graduate')    
-    cbx(368, student.ca_parented == '15', 'Unknown or decline to state')   
-    # siblings
-    banner_at(556, '8. Future Enrollments')
-    newline_at(572)
-    txt(40, 'For planning purposes, please list the names and birthdates of any pre-school siblings who may')
+    cbx(368, student.ca_parented == '15', 'Unknown or decline to state')
+    # lang survey
+    banner_at(480, '7. Home Language Survey')
+    newline(6)
+    txa(40, 520, 'The California Education Code requires schools to determine the language(s) spoken in the home of each student.  Please answer all of the questions in this section.', 1, true, 'L')
+
+    newline(12)
+    txt(40, '7a. Which langugage did this student learn when he or she first began to talk?')
+    tbx(430, fmt_select(LANGUAGE_OPTIONS, student.lang_earliest), 144)
     newline
-    txt(40, 'enter Bacich or Kent in future years.')
+    txt(40, '7b. What language does this student most frequently use at home?')
+    tbx(430, fmt_select(LANGUAGE_OPTIONS, student.ca_homelanguage), 144)
     newline
-    txt(40, 'First Name')
-    tbx(100, student.sibling1_name)
-    txt(250, 'Date of Birth')
-    tbx(310, fmt_date(student.sibling1_dob))
+    txt(40, '7c. What language do you use most frequently to speak to this student?')
+    tbx(430, fmt_select(LANGUAGE_OPTIONS, student.lang_spoken_to), 144)
     newline
-    txt(40, 'First Name')
-    tbx(100, student.sibling2_name)
-    txt(250, 'Date of Birth')
-    tbx(310, fmt_date(student.sibling2_dob))
+    txt(40, '7d. What language is most often spoken by the adults (parents, grandparents, others) at home?')
+    tbx(430, fmt_select(LANGUAGE_OPTIONS, student.lang_adults_primary), 144)
     newline
-    txt(40, 'First Name')
-    tbx(100, student.sibling3_name)
-    txt(250, 'Date of Birth')
-    tbx(310, fmt_date(student.sibling3_dob))
+    txt(40, '7e. If applicable, what other language is spoken by the adults at home?')
+    tbx(430, fmt_select(LANGUAGE_OPTIONS, student.lang_other), 144)
+    newline(20)
+    txt(40, 'If applicable, enter date student was first enrolled in an English Language Development Program.')
+    tbx(450, fmt_date(student.ca_dateenroll))
     newline
-    txt(40, 'First Name')
-    tbx(100, student.sibling4_name)
-    txt(250, 'Date of Birth')
-    tbx(310, fmt_date(student.sibling4_dob))
+    txt(40, 'If the student was reclassified as Fluent-English Proficient, enter the date of reclassification.')
+    tbx(450, fmt_date(student.ca_daterfep))
     # footer
     reg_form_footer
   end
@@ -850,76 +873,53 @@ class RegFormPDF < FPDF
     new_page(student, 'P')
     # header
     reg_form_header(student)
-    # eld
-    banner_at(108, '9. Languages Spoken at Home')
-    newline_at(124)
-    txt(40, 'The California Education Code requires schools to determine the language(s) spoken')
-    newline
-    txt(40, ' in the home of each student.  Please answer all questions on this page.')
-    newline
-    txt(40, '1. Which langugage did this student learn when he or she first began to talk?')
-    tbx(430, fmt_select(LANGUAGE_OPTIONS, student.lang_earliest), 144)
-    newline
-    txt(40, '2. What language does this student most frequently use at home?')
-    tbx(430, fmt_select(LANGUAGE_OPTIONS, student.ca_homelanguage), 144)
-    newline
-    txt(40, '3. What language do you use most frequently to speak to this student?')
-    tbx(430, fmt_select(LANGUAGE_OPTIONS, student.lang_spoken_to), 144)
-    newline
-    txt(40, '4a. What language is most often spoken by the adults (parents, grandparents, others) at home?')
-    tbx(430, fmt_select(LANGUAGE_OPTIONS, student.lang_adults_primary), 144)
-    newline
-    txt(40, '4b. If applicable, what other language is spoken by the adults at home?')
-    tbx(430, fmt_select(LANGUAGE_OPTIONS, student.lang_other), 144)
-    newline
-    txt(40, 'If the student has been previously tested for English Language proficiency, choose the appropriate fluency category, and submit')
-    newline
-    txt(40, 'all prior language test records to the school office.')
-    newline
-    txt(40, 'Fluency:')
-    cbx(140, student.ca_langfluency == '1', 'English is only language spoken')    
-    cbx(300, student.ca_langfluency == '3', 'English Learner')
-    newline
-    cbx(140, student.ca_langfluency == '2', 'Initially Fluent-English Proficent')
-    cbx(300, student.ca_langfluency == '4', 'Reclassified Fluent-English Proficient')
-    newline
-    txt(40, 'If applicable, enter date student was first enrolled in an English Language Development Program.')
-    tbx(450, fmt_date(student.ca_dateenroll))
-    newline
-    txt(40, 'If the student was reclassified as Fluent-English Proficient, enter the date of reclassification.')
-    tbx(450, fmt_date(student.ca_daterfep))
     # emergency
-    banner_at(364, '10. Permissions, Agreement, and Emergency Information')
-    newline_at(370)
-    txa(40, 520, 'Please review the Web Publishing Guidelines in the registration packet before answering questions 10a and 10b.  The Guidelines are also available on our website at http://www.kentfieldschools.org/District/Technology.  You may opt to deny publication of school work created by, or pictures of, your child by checking the appropriate No box.', 1, true, 'L')
-    txa(40, 520, 'Important: Check either the Yes box or the No box for each of questions 10a and 10b.  If neither box is checked, or if both boxes are checked, the District will assume that you are allowing publication. ', 2, true, 'L')
-
+    banner_at(100, '8. (Medical Information - See Emergency Card)')
+    # permissions
+    banner_at(116, '9a. Previous School Permission')
     newline(6)
-    txa(40, 520, '10a. Public Internet.  I hereby grant or deny permission to the Kentfield School District to allow the publication of work created by my child, articles mentioning my child, or group photos containing images of my child, as described in the Web Publishing Guidelines, on the publicly accessible internet.', 1, true, 'L')
+    txa(40, 520, "I hereby grant permission to the Kentfield School District to contact my child's previous school regarding recommendations for placement.", 1, true, 'L')
+    newline_at(168)
+    txa(40, 160, 'Parent(s) / Guardian(s) Signatures', 1, true, 'R')
+    tbx(210, '', 160, @txtbox_height + @line_spacing)
+    newline_at(168)
+    txa(390, 40, 'Date', 1, true, 'R')
+    tbx(440, '', 100)
+
+    banner_at(200, '9b. (Emergency Authorization - See Emergency Card)')
+
+    banner_at(216, '9c. Permission to Publish on the Public Internet')
+    newline(6)
+    txa(40, 520, 'Please review the Web Publishing Guidelines in the registration packet before answering questions 9c. and 9d.  The Guidelines are also available on our website at http://www.kentfieldschools.org/District/Technology.  You may opt to deny publication of school work created by, or pictures of, your child by checking the appropriate No box.', 1, true, 'L')
+    txa(40, 520, 'Important: Check either the Yes box or the No box for each of questions 9c. and 9d.  If neither box is checked, or if both boxes are checked, the District will assume that you are allowing publication. ', 2, true, 'L')
+    newline(6)
+    txa(40, 520, 'I hereby grant or deny permission to the Kentfield School District to allow the publication of work created by my child, articles mentioning my child, or group photos containing images of my child, as described in the Web Publishing Guidelines, on the publicly accessible internet.', 1, true, 'L')
     newline(12)
     cbx(140, student.pub_waiver_public, 'Yes, allow publication')
     cbx(260, !student.pub_waiver_public.nil? && !student.pub_waiver_public, 'No, deny publication for Public Internet')
 
-    newline(12)
-    txa(40, 520, '10b. Private Distribution.  I hereby grant or deny permission to the Kentfield School District to allow the publication of work created by my child, articles mentioning my child or other family members, or individual or group photos of my child or other family members, as described in the Web Publishing Guidelines, at school or district meetings, in documents, on CD and DVD disks, in e-mails, on web sites or on other media that are restricted to viewing by District staff, students and parents.', 1, true, 'L')
+    banner_at(372, '9d. Permission to Publish for Restricted Distribution')
+    newline(6)
+    txa(40, 520, 'I hereby grant or deny permission to the Kentfield School District to allow the publication of work created by my child, articles mentioning my child or other family members, or individual or group photos of my child or other family members, as described in the Web Publishing Guidelines, at school or district meetings, in documents, on CD and DVD disks, in e-mails, on web sites or on other media that are restricted to viewing by District staff, students and parents.', 1, true, 'L')
     newline(12)
     cbx(140, student.pub_waiver_restricted, 'Yes, allow publication')
     cbx(260, !student.pub_waiver_restricted.nil? && !student.pub_waiver_restricted, 'No, deny publication for Private Distribution')
     
-    newline(12)
+    banner_at(468, '9e. Responsibility for Student')
+    newline(6)
+    txa(40, 520, 'Sign and date the following agreement:  To the best of my knowledge, all the information reported on this form is true and correct.  I (we) assume full responsibility for my student in all school matters.  I (we) will notify the school office immediately if there is a change in any of the information reported on this form.', 1, true, 'L')
+
+    newline_at(532)
+    txa(40, 160, 'Parent(s) / Guardian(s) Signatures', 1, true, 'R')
+    tbx(210, '', 160, @txtbox_height + @line_spacing)
+    newline_at(532)
+    txa(390, 40, 'Date', 1, true, 'R')
+    tbx(440, '', 100)
+    
+    banner_at(572, '9f. (Emergency Volunteer Information - See Emergency Card')
+    newline(6)
     txa(40, 520, 'Registration is not complete unless both sides of the Marin County Student Emergency Contact Card have been completely filled out and signed, and any legal custody and/or visitation orders have been submitted.', 2, true, 'L')
 
-    newline(6)
-    txa(40, 520, '10c. Sign and date the following agreement:  To the best of my knowledge, all the information reported on this form is true and correct.  I (we) assume full responsibility for my student in all school matters.  I (we) will notify the school office immediately if there is a change in any of the information reported on this form.', 1, true, 'L')
-
-    newline(6)
-    txa(40, 160, 'Parent(s) / Guardian(s) Signatures', 1, true, 'R')
-    newline
-    tbx(210, '', 160, @txtbox_height + @line_spacing)
-    newline(6)
-    txa(40, 160, 'Date', 1, true, 'R')
-    tbx(210, '', 160)
-    
     # footer
     reg_form_end_footer
   end

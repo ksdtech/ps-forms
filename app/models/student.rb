@@ -17,6 +17,11 @@ class Student < ActiveRecord::Base
   validates_numericality_of :enroll_status, :on => :create, :only_integer => true
   validates_numericality_of :home_id, :on => :create, :only_integer => true, :greater_than => 0
   
+  # TODO: new hmong ethnicity 
+  def ca_ethnhm
+    nil
+  end
+    
   def full_name
     "#{first_name} #{last_name}".strip
   end
@@ -34,11 +39,11 @@ class Student < ActiveRecord::Base
   end
   
   def reg_year
-    "2008-2009"
+    "2009-2010"
   end
 
   def short_reg_year
-    "08-09"
+    "2009"
   end
   
   PARENT_LAST =  {
@@ -421,6 +426,42 @@ class Student < ActiveRecord::Base
       (@col_keys ||= column_names).include?(key.to_s)
     end
     
+    def bool_convert(attrs, key)
+      return if attrs[key].nil?
+      test = attrs[key].to_s.downcase
+      if ['true','t','1','yes','on'].include?(test)
+        attrs[key] = true
+      elsif ['false','f','0','no','off'].include?(test)
+        attrs[key] = false
+      end
+    end
+    
+    def bool_fix(fname='students.txt')
+      ver = Version.current
+      options = { :students_only => false, :col_sep => "\t", :row_sep => "\n" }
+      fname = File.join(RAILS_ROOT, 'data', fname) unless fname[0,1] == '/'
+      UnquotedCSV.foreach(fname, 
+        :col_sep => options[:col_sep], :row_sep => options[:row_sep],
+        :headers => true, :header_converters => :symbol) do |row|
+        begin
+          
+          puts "fix student #{row[:student_number]}"
+          s = ver.students.find(:first, :conditions => ['student_number=?',row[:student_number]])
+          if s
+            student_attrs = { :pub_waiver_public => row[:pub_waiver_public],
+              :pub_waiver_restricted => row[:pub_waiver_restricted] }
+            # oops. forgot that pub_waiver fields are "yes" or "no" in PowerSchool
+            # need to convert them to true or false
+            bool_convert(student_attrs, :pub_waiver_public)
+            bool_convert(student_attrs, :pub_waiver_restricted)
+            s.update_attributes(student_attrs)
+          else
+            puts "not found!"
+          end
+        end
+      end
+    end
+    
     # The file students.txt is created with Names-Families-All-Contact-Info 
     # export template.
     def import(ver=nil, fname='students.txt', options={})
@@ -445,6 +486,10 @@ class Student < ActiveRecord::Base
           attrs[:home2_id] = 0 if attrs[:home2_id].nil?
           puts "new student #{row[:student_number]}"
           student_attrs = attrs.reject { |k, v| !Student.has_attribute?(k) }
+          # oops. forgot that pub_waiver fields are "yes" or "no" in PowerSchool
+          # need to convert them to true or false
+          bool_convert(student_attrs, :pub_waiver_public)
+          bool_convert(student_attrs, :pub_waiver_restricted)
           if ver.nil?
             ver = Version.create
           elsif ver.is_a?(Fixnum)

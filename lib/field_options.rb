@@ -554,7 +554,7 @@ LANGUAGE_OPTIONS = [
   [ 'Albanian'  , '56' ],
   [ 'American Sign Language', '37' ],
   [ 'Arabic'    , '11' ],
-  [ 'Armenian'  , '19' ],
+  [ 'Armenian'  , '12' ],
   [ 'Assyrian'  , '42' ],
   [ 'Bengali'   , '61' ],
   [ 'Bosnian'   , '52' ],

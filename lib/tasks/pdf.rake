@@ -1,5 +1,4 @@
 namespace :pdf do
-
   desc "generate a test registration form pdf"
   task :reg_test => :environment do
     RegFormPDF.reg_forms([Student.find(:first)], "#{Rails.root}/data/reg_test.pdf")
@@ -49,7 +48,18 @@ namespace :pdf do
   desc "generate kent emergency forms pdf"
   task :emerg_kent => :environment do
     RegFormPDF.export_kent_emergency_forms("#{Rails.root}/data/2009-kx")
-  end
+  end  
   
+  desc "all bacich forms pdf"
+  task :bacich_forms => :environment do
+    RegFormPDF.export_bacich_reg_forms("#{Rails.root}/data/2009-br")
+    RegFormPDF.export_bacich_emergency_forms("#{Rails.root}/data/2009-bx")
+  end  
+  
+  desc "all kent forms pdf"
+  task :kent_forms => :environment do
+    RegFormPDF.export_kent_reg_forms("#{Rails.root}/data/2009-kr")
+    RegFormPDF.export_kent_emergency_forms("#{Rails.root}/data/2009-kx")
+  end  
 
 end

@@ -31,7 +31,7 @@ class RegFormPDF < FPDF
       export_forms(basename, ver, order, 104, true, false, 'output_reg_forms')
     end
     
-    def export_bacich_emergency_forms(basename, ver=nil, order=nil)
+    def export_bacich_emergency_forms(basename, ver=nil, order="home_room,last_name,first_name")
       export_forms(basename, ver, order, 103, false, true, 'output_emergency_forms')
     end
 

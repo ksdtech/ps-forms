@@ -45,6 +45,17 @@ namespace :pdf do
     RegFormPDF.export_bacich_emergency_forms("#{Rails.root}/data/2009-bx")
   end
   
+  desc "generate per grade bacich emergency forms"
+  task :emerg_grades => :environment do
+    order = 'home_room,last_name,first_name'
+    conds = ['enroll_status<=0 AND schoolid=? AND grade_level=?', 103, 0]
+    RegFormPDF.export_forms('grade_k', nil, order, 103, false, true, 'output_emergency_forms', conds)
+    conds = ['enroll_status<=0 AND schoolid=? AND grade_level=?', 103, 1]
+    RegFormPDF.export_forms('grade_1', nil, order, 103, false, true, 'output_emergency_forms', conds)
+    conds = ['enroll_status<=0 AND schoolid=? AND grade_level=?', 103, 2]
+    RegFormPDF.export_forms('grade_2', nil, order, 103, false, true, 'output_emergency_forms', conds)
+  end
+  
   desc "generate kent emergency forms pdf"
   task :emerg_kent => :environment do
     RegFormPDF.export_kent_emergency_forms("#{Rails.root}/data/2009-kx")

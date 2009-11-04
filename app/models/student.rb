@@ -30,8 +30,12 @@ class Student < ActiveRecord::Base
     grade_level == 0 ? 'K' : grade_level.to_s
   end
   
+  def display_school_meds
+    school_meds_office ? "Regular medication form on file" : "No regular medication form on file"
+  end
+  
   def display_72_hour_meds
-    emergency_meds ? "See 72-hour medication form" : "No 72-hour form submitted"
+    emergency_meds_complete ? "72-hour medication form on file" : "No 72-hour medication form on file"
   end
   
   def to_s
@@ -590,6 +594,68 @@ class Student < ActiveRecord::Base
       end
       
       pdf.render_file(fname)
+    end
+    
+    def report_text_fields(coll = nil)
+      columns = [[:allergies, 450], 
+        [:behavior_issues, 125], 
+        [:movement_limits_desc, 125], 
+        [:medical_considerations, 450],
+        [:illness_desc, 450],
+        [:medical_accom_desc, 450]]
+      report = columns.inject({}) do |h, col|
+        col_name = col[0]
+        h[col_name] = { :student => nil, :max_length => nil, :text => nil,
+          :overs => [ ],
+          :buckets => [[ 450,  0 ], [ 300,  0], [ 150, 0 ], [ 100, 0 ]] }
+        h
+      end
+      coll = Student.all if coll == nil
+      coll.each do |stu|
+        columns.each do |col|
+          col_name = col[0]
+          t = stu.send(col_name)
+          if !t.blank?
+            len = t.size
+            report[col_name][:buckets].each_with_index do |bucket, i|
+              if len >= bucket[0]
+                report[col_name][:buckets][i][1] += 1
+                break
+              end
+            end
+            col_max = col[1]
+            if len > col_max
+              first = t[0,col_max]
+              last = t[col_max,len-col_max]
+              report[col_name][:overs] << { :student => stu.to_s, :text => "#{first}<<<\n>>>#{last}"}
+            end
+            max_len = report[col_name][:max_length]
+            if max_len.nil? || len > max_len
+              report[col_name][:student] = stu.to_s
+              report[col_name][:max_length] = len
+              report[col_name][:text] = t 
+            end
+          end
+        end
+      end
+      columns.each do |col|
+        col_name = col[0]
+        puts col_name.to_s
+        report[col_name][:buckets].each do |bucket|
+          puts " >= #{bucket[0]}: #{bucket[1]}"
+        end
+        puts " student: #{report[col_name][:student]}"
+        puts " length:  #{report[col_name][:max_length]}"
+        if report[col_name][:overs].size
+          puts " #{report[col_name][:overs].size} overs:"
+          report[col_name][:overs].each do |h|
+            puts "   student: #{h[:student]}"
+            puts "   text:    #{h[:text]}"
+            print "\n"
+          end
+        end
+        print "\n\n"
+      end
     end
   end
 end

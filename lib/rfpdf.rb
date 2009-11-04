@@ -3,6 +3,8 @@ require 'field_options'
 
 class RegFormPDF < FPDF
   attr_accessor :line_y, :font_height, :chkbox_size, :leading, :txtbox_width, :q_nil
+  MAX_FIELD_LENGTH_1 = 125
+  MAX_FIELD_LENGTH_3 = 450
   
   class << self
     def missing_data(filename=nil)
@@ -35,14 +37,14 @@ class RegFormPDF < FPDF
       export_forms(basename, ver, order, 103, false, true, 'output_emergency_forms')
     end
 
-    def export_kent_emergency_forms(basename, ver=nil, order=nil)
+    def export_kent_emergency_forms(basename, ver=nil, order="grade_level,last_name,first_name")
       export_forms(basename, ver, order, 104, false, true, 'output_emergency_forms')
     end
 
-    def export_forms(basename, ver, order, school_id, reg_forms, emergency_forms, method)
+    def export_forms(basename, ver, order, school_id, reg_forms, emergency_forms, method, conds=nil)
       ver = Version.current if ver.nil?
       order = 'last_name,first_name' if order.blank?
-      conds = [ 'enroll_status<=0 AND schoolid=?', school_id ]
+      conds ||= [ 'enroll_status<=0 AND schoolid=?', school_id ]
       slice_start = 0
       slice_len = 100
       st_slice = ver.students.find(:all, :conditions => conds,
@@ -227,18 +229,23 @@ class RegFormPDF < FPDF
     @line_y = @y if advance
   end
 
-  def tbx(x, val, w=nil, h=nil, y=nil)
+  def tbx(x, text, w=nil, h=nil, y=nil)
     w = @txtbox_width if w.nil?
     h = @txtbox_height if h.nil?
     y = @line_y if y.nil?
     SetDrawColor(0.0, 105.0, 255.0)
     SetLineWidth(0.4)
-    Rect(x, y+2, w, -h)
-    set_font(2)
+    Rect(x, y + 2 - @txtbox_height, w, h)
     # still don't know why the parens are escaped sometimes
-    Text(x+4, y, val.to_s.gsub(/\\\(/, '(').gsub(/\\\)/, ')'))
+    text = text.to_s.gsub(/\<BR\>/i, "\n").gsub(/\\\(/, '(').gsub(/\\\)/, ')')
+    next_y = @line_y
+    SetXY(x + 2, y + 2 - @leading)
+    
+    set_font(2)
+    MultiCell(w - 4, @leading, text, 0, 'L')
+    @line_y = next_y
   end
-  
+
   def lin(x1, y1, x2, y2)
     SetDrawColor(0.0)
     SetLineWidth(1)
@@ -263,12 +270,15 @@ class RegFormPDF < FPDF
   end
     
   def cbx_test(x, field, value, prompt='', size=nil, y=nil)
-    if field.nil? || field === false
+    if field.nil? || !field
       field = '0'
     elsif field === true
       field = '1'
+    else
+      field = field.to_s.strip
+      field = '0' if field.empty?
     end
-    checked = ((field || '').to_s.downcase == value.downcase)
+    checked = (field.downcase == value.downcase)
     cbx(x, checked, prompt, size, y)
   end
     
@@ -868,18 +878,18 @@ class RegFormPDF < FPDF
     newline_at(36)
     txa(36, 720, 'STUDENT EMERGENCY CONTACT CARD', 5, true, 'C')
     txa(36, 720, 'Emergency Contacts / Medical Consent (other side)', 2, false, 'C')
-    newline_at(72)
-    txa(162, 380, %{In case of an emergency, it is imperative that the school be able to reach the student's parent or guardian.  Please fill in the information on both sides of this card carefully and accurately.  Please type or use ink and print clearly and legibly.})
+    # newline_at(72)
+    # txa(162, 380, %{In case of an emergency, it is imperative that the school be able to reach the student's parent or guardian.  Please fill in the information on both sides of this card carefully and accurately.  Please type or use ink and print clearly and legibly.})
     newline_at(96)
-    txt(558, 'Grade')
-    tbx(582, fmt_select(SHORT_GRADE_LEVEL_OPTIONS, student.grade_level), 24)
+    txt(548, 'Grade')
+    tbx(580, fmt_select(SHORT_GRADE_LEVEL_OPTIONS, student.grade_level), 24)
     banner_at(124, 'STUDENT', 58, -1)
     tbx(120, student.last_name, 96)
     tbx(222, student.first_name, 96)
     tbx(324, student.middle_name, 96)
     cbx_test(450, student.gender, 'M', 'Male')
     newline
-    txt(168, 'Last Name')
+    txt(120, 'Last Name')
     txt(222, 'First')
     txt(324, 'Middle')
     cbx_test(450, student.gender, 'F', 'Female')
@@ -967,57 +977,47 @@ class RegFormPDF < FPDF
     cbx_test(450, student.custody_orders, '0', 'No')
     cbx(492, student.custody_orders, 'Yes')
     txt(534, 'If Yes, please attach LEGAL ORDER.')
-    newline_at(366)
-    txt(66, 'Languages spoken at home: 1.')
-    tbx(200, fmt_select(LANGUAGE_OPTIONS, student.ca_homelanguage), 220)
-    txt(450, '2.')
-    tbx(462, fmt_select(LANGUAGE_OPTIONS, student.lang_other), 268)
-    banner_at(386, 'AUTHORIZED CONTACTS', 58, -1)
-    newline_at(386-5)
+    # newline_at(366)
+    # txt(66, 'Languages spoken at home: 1.')
+    # tbx(200, fmt_select(LANGUAGE_OPTIONS, student.ca_homelanguage), 220)
+    # txt(450, '2.')
+    # tbx(462, fmt_select(LANGUAGE_OPTIONS, student.lang_other), 268)
+    banner_at(346, 'AUTHORIZED ADULTS', 58, -1)
+    newline_at(340)
     txa(190, 530, %{Please list the names of relatives/neighbors/friends in close proximity to the school to whom we may release your child}, 6, true)
     txa(66, 654, %{or contact if you cannot be reached.  NO STUDENT WILL BE RELEASED TO ANYONE OTHER THAN THE PARENTS, GUARDIANS OR ADULTS LISTED ON THIS CARD. In selecting someone to whom you authorize the release of your child, consider: (a) Would your child feel safe and comfortable with this person and family?(b) Could this person care for your child for several days? (c) Is this person prepared to handle any special medical needs required by your child?}, 6)
-    newline_at(430)
-    txa(130, 530, %{I/we hereby authorize the release of the student named above to the following persons in the event of illness, injury, evacuation or emergency that may occur while students are in school.})
-    newline_at(464)
+    newline(44)
+    # txa(130, 530, %{I/we hereby authorize the release of the student named above to the following persons in the event of illness, injury, evacuation or emergency that may occur while students are in school.})
+    # newline(44)
     txt(66, 'Last Name')
     txt(186, 'First')
     txt(336, 'Relationship')
-    txt(436, 'Home Phone')
-    txt(536, 'Work Phone')
-    txt(636, 'Cell Phone')
-    newline_at(480)
+    txt(436, 'Primary Phone')
+    txt(536, 'Alternate Phone')
+    newline
     tbx(66, student.emerg_contact_1, 114)
     tbx(186, student.emerg_1_first, 144)
     tbx(336, student.emerg_1_rel, 94)
-    tbx(436, student.e1_home_phone, 94)
-    tbx(536, student.e1_work_phone, 94)
-    tbx(636, student.e1_cell, 94)
-    newline_at(496)
+    tbx(436, student.emerg_phone_1, 94)
+    tbx(536, student.emerg_1_alt_phone, 94)
+    newline
     tbx(66, student.emerg_contact_2, 114)
     tbx(186, student.emerg_2_first, 144)
     tbx(336, student.emerg_2_rel, 94)
-    tbx(436, student.e2_home_phone, 94)
-    tbx(536, student.e2_work_phone, 94)
-    tbx(636, student.e2_cell, 94)
-    newline_at(512)
+    tbx(436, student.emerg_phone_2, 94)
+    tbx(536, student.emerg_2_alt_phone, 94)
+    newline
     tbx(66, student.emerg_3_last, 114)
     tbx(186, student.emerg_3_first, 144)
     tbx(336, student.emerg_3_rel, 94)
-    tbx(436, student.e3_home_phone, 94)
-    tbx(536, student.e3_work_phone, 94)
-    tbx(636, student.e3_cell, 94)
-    newline_at(528)
-    tbx(66, student.emerg_x_last, 114)
-    tbx(186, student.emerg_x_first, 144)
-    tbx(336, student.emerg_x_rel, 94)
-    tbx(436, student.ex_home_phone, 94)
-    tbx(536, student.ex_work_phone, 94)
-    tbx(636, student.ex_cell, 94)
-    newline_at(532)
-    txa(130, 530, %{I declare that the information on this form is true and correct.  I will notify the school office immediately of any changes to be made in the foregoing information.})
-    newline_at(582)
-    txt(66, 'Parent/Guardian Signature')
-      SetFont('ArialNarrow', 'B', 16)
+    tbx(436, student.emerg_3_phone, 94)
+    tbx(536, student.emerg_3_alt_phone, 94)
+    # newline
+    # tbx(66, student.emerg_x_last, 114)
+    # tbx(186, student.emerg_x_first, 144)
+    # tbx(336, student.emerg_x_rel, 94)
+    
+    SetFont('ArialNarrow', 'B', 16)
     school = 'Bacich Elementary'
     if student.grade_level.to_i > 4
       school = 'Kent Middle'
@@ -1030,64 +1030,118 @@ class RegFormPDF < FPDF
     new_page(student, 'L', 90)
     newline_at(36)
     txa(36, 720, 'STUDENT EMERGENCY CONTACT CARD', 5, true, 'C')
-    txa(36, 720, 'Medical Information and Consent', 2, false, 'C')
+      txa(36, 720, 'Medical Information and Consent', 2, false, 'C')
     banner_at(78, 'STUDENT', 44, -1)
     tbx(110, student.last_name, 116)
     tbx(232, student.first_name, 116)
     tbx(354, student.middle_name, 116)
     newline
-    txt(150, 'Last')
-    txt(300, 'First')
-    txt(420, 'Middle')
+    txt(110, 'Last Name')
+    txt(232, 'First')
+    txt(354, 'Middle')
+    
+    # authorization
+    banner_at(78, 'EMERGENCY TREATMENT AUTHORIZATION', 514, -1)
+    newline_at(90)
+    txt(514, 'Authorization and Consent for Emergency Medical Care')
+    newline_at(102)
+    txt(514, 'Authorization Granted?')
+    cbx_test(632, student.release_authorization, '0', 'No')
+    cbx(664, student.release_authorization, 'Yes')
+    newline_at(110)
+    if student.release_authorization
+      txa(514, 220, %{I/we, the undersigned parent(s) or legal guardian of}, 4, true)
+      txa(514, 150, %{#{student.first_name} #{student.last_name}}, 2)
+      txa(664, 70, %{a minor, do hereby}, 4, true)
+      txa(514, 220, %{give authorization and consent to the school to obtain emergency medical care and necessary transportation, including x-ray examination, anesthetic, medical or surgical diagnosis and emergency hospital which is deemed advisable by and is to be rendered under the general or specific supervision of medical and emergency room staff licensed under the provisions of the medicine practice act and the State of California Department of Public Health.}, 4, true)
+      newline
+      txa(514, 220, %{It is understood that effort shall be made to contact the undersigned prior to rendering treatment to the student, but that any of the above treatment will not be withheld if the undersigned or authorized adults cannot be reached.}, 4, true)
+      newline
+      txa(514, 150, %{#{student.emergency_hospital}}, 2)
+      txa(664, 70, %{is the hospital}, 4, true)
+      txa(514, 220, %{I/we prefer for emergency medical treatment of my/our child.}, 4, true)
+      newline
+      txa(514, 220, %{I/we understand that the school district does not provide accident/medical insurance for students, and I/we further understand that all costs related to medical treatment may be my/our responsibility and not that of the school district.}, 4)
+      newline_at(400)
+      txt(514, 'Parent/Guardian Signature(s)')
+      txt(654, 'Date')
+      newline_at(416)
+      tbx(514, student.signature_1, 100)
+      tbx(654, student.responsibility_date, 80)
+      newline_at(432)
+      tbx(514, student.signature_2, 100)
+    end
+    # banner_at(437.5, 'VOLUNTEER ASSISTANCE', 514, -1)
+    # newline_at(450)
+    # txa(514, 220, %{If you live close to school and feel that, if called, you can offer volunteer assistance during an emergency, please provide your name, phone number and expertise.})
+    # newline_at(500)
+    # txa(514, 220, 'I would like to help in an emergency.', 4, false, 'C')
+    # newline_at(542)
+    # txt(514, 'Name')
+    # txt(694, 'Phone')
+    # newline_at(566)
+    # txt(514, 'Qualifications')
+    
     banner_at(104, 'MEDICAL/HEALTH INFORMATION', 44, -1)
-    newline_at(124)
-    txt(44, 'Medication: Does your child require medication?')
-    cbx_test(292, student.requires_meds, '0', 'No')
-    cbx(342, student.requires_meds, 'Yes')
-    newline(6)
-    txa(44, 480-44, %{If your child requires medication at school, all medication sent to school must be in the original prescription container with a currrent date and the child's name.  An "Authorization for Administration of Medication" form must be on file.  For disasters, please provide a separate three-day supply for the school office, in the same format, along with the green "72-Hour Disaster Medication" form.  Both forms are available from the school office.})
-    newline_at(196)
-    txt(130, 'Medication')
-    txt(298, 'Dosage')
-    txt(390, 'Hour(s) given')
-    newline_at(214)
-    tbx(58, student.med1_name, 200)
-    tbx(264, student.med1_dosage, 100)
-    tbx(370, student.med1_hours, 100)
-    newline_at(228)
-    tbx(58, student.med2_name, 200)
-    tbx(264, student.med2_dosage, 100)
-    tbx(370, student.med2_hours, 100)
-    newline_at(242)
-    tbx(58, student.display_72_hour_meds, 200) # tbx(58, student.med3_name, 200)
+    newline_at(116)
+    txt(44, 'Does the student take medication at home or at school?')
+    cbx_test(304, student.requires_meds, '0', 'No')
+    cbx(336, student.requires_meds, 'Yes')
+    newline
+    txt(44, 'Medication provided for the student to take at school?')
+    cbx_test(304, student.school_meds, '0', 'No')
+    cbx(336, student.school_meds, 'Yes')
+    newline
+    txt(44, '72-hour medication provided to be used in an emergency?')
+    cbx_test(304, student.emergency_meds, '0', 'No')
+    cbx(336, student.emergency_meds, 'Yes')
+    # newline(6)
+    # txa(44, 480-44, %{If your child requires medication at school, all medication sent to school must be in the original prescription container with a currrent date and the child's name.  An "Authorization for Administration of Medication" form must be on file.  For disasters, please provide a separate three-day supply for the school office, in the same format, along with the green "72-Hour Disaster Medication" form.  Both forms are available from the school office.})
+    # txt(44, 'Medication Form Information')
+    # txt(298, 'Dosage')
+    # txt(390, 'Hour(s) given')
+    # newline_at(214)
+    # tbx(58, student.display_school_meds, 200)
+    # tbx(58, student.med1_name, 200)
+    # tbx(264, student.med1_dosage, 100)
+    # tbx(370, student.med1_hours, 100)
+    # newline_at(228)
+    # tbx(58, student.display_72_hour_meds, 200)
+    # tbx(58, student.med2_name, 200)
+    # tbx(264, student.med2_dosage, 100)
+    # tbx(370, student.med2_hours, 100)
+    # newline_at(242)
+    # tbx(58, student.med3_name, 200)
     # tbx(264, student.med3_dosage, 100)
     # tbx(370, student.med3_hours, 100)
-    newline_at(258)
-    txt(44, 'Health Insurance Information: Please check appropriate box')
+    # newline_at(258)
+    newline(16)
+    txt(44, 'Health Insurance Information:')
     newline
     cbx_test(58, student.health_ins_type, 'private', 'Family Health Insurance')
     cbx_test(198, student.health_ins_type, 'hfam', 'Healthy Families')
     cbx_test(304, student.health_ins_type, 'cakids', 'California Kids')
     newline
     cbx_test(58, student.health_ins_type, 'medi-cal', 'Medi-Cal #')
-    tbx(114, student.medi_cal_num, 150)
+    tbx(120, student.medi_cal_num, 150)
     cbx_test(304, student.health_ins_type, 'none', 'No Health Insurance')
-    newline_at(298)
+    
+    newline
     txt(44, 'Physician/Health Care Provider')
-    tbx(174, student.doctor_name, 146)
-    txt(322, 'Phone No.')
+    tbx(180, student.doctor_name, 140)
+    txt(324, 'Phone No.')
     tbx(370, student.doctor_phone)
-    newline_at(316)
+    newline
     txt(44, 'Health Plan/Group Name')
-    tbx(152, student.medical_carrier, 168)
-    txt(322, 'Policy No.')
+    tbx(180, student.medical_carrier, 140)
+    txt(324, 'Policy No.')
     tbx(370, student.medical_policy)
-    newline_at(334)
+    newline
     txt(44, 'Dentist')
-    tbx(78, student.dentist_name, 242)
-    txt(322, 'Phone No.')
+    tbx(180, student.dentist_name, 140)
+    txt(324, 'Phone No.')
     tbx(370, student.dentist_phone)
-    newline_at(350)
+    newline
     txt(44, 'Vision and/or Hearing Problems:')
     newline
     cbx(58, student.eyeglasses, 'Wears glasses/contacts:')
@@ -1096,12 +1150,17 @@ class RegFormPDF < FPDF
     cbx(404, student.eyeglasses_always, 'all the time')
     newline
     txt(50, 'Date of last eye exam')
-    tbx(166, student.h_last_eye_exam)
+    tbx(152, student.h_last_eye_exam)
     cbx(304, student.h_hearing_aid, 'Wears hearing aid(s)')
-    newline_at(400)
-    txt(44, 'Medical Conditions: Please check the appropriate boxes if your child has any of the following:')
+    
+    newline(16)
+    txt(44, 'Medical Conditions:')
     newline
-    cbx(58, student.allergies_severe, 'Severe allergies requiring:')
+    has_allergies = student.allergies_severe || student.allergies_epi_pen ||
+      student.allergies_benadryl || student.allergies_food ||
+      student.allergies_insects || student.allergies_drugs ||
+      student.allergies_other
+    cbx(58, has_allergies, 'Severe allergies requiring:')
     cbx(198, student.allergies_epi_pen, 'Epi-pen')
     cbx(304, student.allergies_benadryl, 'Benadryl')
     newline
@@ -1110,70 +1169,55 @@ class RegFormPDF < FPDF
     cbx(304, student.allergies_drugs, 'Medicines/Drugs')
     cbx(404, student.allergies_other, 'Other')
     newline
-    txt(78, 'Please explain:')
-    tbx(150, student.allergies, 320)
-    newline_at(458)
-    cbx(58, student.asthma, 'Current asthma')
+    txt(70, 'Please explain:')
+    newline
+    tbx(70, (student.allergies || '')[0,MAX_FIELD_LENGTH_3], 400, 32)
+    newline(36)
+    has_asthma = student.asthma || student.asthma_inhaler ||
+      student.asthma_medication
+    cbx(58, has_asthma, 'Current asthma')
     txt(152, 'If checked,')
     cbx(304, student.asthma_inhaler, 'uses inhaler')
     cbx(376, student.asthma_medication, 'on daily medication')
     newline
-    cbx(58, student.seizures, 'Current seizures')
+    has_seizures = student.seizures || student.seizures_medication
+    cbx(58, has_seizures, 'Current seizures')
     txt(152, 'If checked, on medication?')
     cbx(304, student.seizures_medication, 'Yes')
-    cbx(376, student.seizures && !student.seizures_medication, 'No')
+    cbx(376, has_seizures && !student.seizures_medication, 'No')
     newline
-    cbx(58, student.diabetes, 'Diabetes')
+    has_diabetes = student.diabetes || student.diabetes_insulin
+    cbx(58, has_diabetes, 'Diabetes')
     txt(152, 'If checked, insulin dependent?')
     cbx(304, student.diabetes_insulin, 'Yes')
-    cbx(376, student.diabetes && !student.diabetes_insulin, 'No')
+    cbx(376, has_diabetes && !student.diabetes_insulin, 'No')
     newline
-    cbx(58, student.behavior_problems, 'Behavior problems:')
-    tbx(166, student.behavior_issues, 304)
+    has_behavior_problems = student.behavior_problems || !student.behavior_issues.blank?
+    cbx(58, has_behavior_problems, 'Behavior problems:')
+    tbx(166, (student.behavior_issues || '')[0,MAX_FIELD_LENGTH_1], 304)
     newline
-    cbx(58, student.movement_limits, 'Movement limitations:')
-    tbx(166, student.movement_limits_desc, 304)
+    has_movement_limits = student.movement_limits || !student.movement_limits_desc.blank?
+    cbx(58, has_movement_limits, 'Movement limitations:')
+    tbx(166, (student.movement_limits_desc || '')[0,MAX_FIELD_LENGTH_1], 304)
     newline
-    cbx(58, student.medical_other, 'Other (please explain):')
-    tbx(166, student.medical_considerations, 304)
+    has_medical_other = student.medical_other || !student.medical_considerations.blank?
+    cbx(58, has_medical_other, 'Other (please explain):')
     newline
-    cbx(58, student.illness_recent, 'Recent illness, hospitalization or surgery.  If checked, please provide date(s) and description(s):')
+    tbx(70, (student.medical_considerations || '')[0,MAX_FIELD_LENGTH_3], 400, 32)
+    newline(36)
+    has_illness_recent = student.illness_recent || !student.illness_desc.blank?
+    cbx(58, has_illness_recent, 'Recent illness, hospitalization or surgery.  If checked, please provide date(s) and description(s):')
     newline
-    tbx(70, student.illness_desc, 400)
+    tbx(70, (student.illness_desc || '')[0,MAX_FIELD_LENGTH_3], 400, 32)
+    newline(36)
+    has_medical_accom = student.medical_accom || !student.medical_accom_desc.blank?
+    cbx(58, has_medical_accom, 'Medical condition which might requre care or accommodation at school (please describe):')
     newline
-    cbx(58, student.medical_accom, 'Medical condition which might requre care or accommodatoin at school (please describe):')
-    newline
-    tbx(70, student.medical_accom_desc, 400)
+    tbx(70, (student.medical_accom_desc || '')[0,MAX_FIELD_LENGTH_3], 400, 32)
+    
+    # vertical separator
     lin(500, 60, 500, 588)
     
-    # authorization
-    banner_at(78, 'EMERGENCY TREATMENT AUTHORIZATION', 514, -1)
-    newline_at(90)
-    txa(514, 220, %{I/we, the undersigned parent(s) or legal guardian of}, 4, true)
-    txa(514, 150, %{#{student.first_name} #{student.last_name}}, 2)
-    txa(664, 70, %{a minor, do hereby}, 4, true)
-    txa(514, 220, %{give authorization and consent to the school to obtain emergency medical care and necessary transportation, including x-ray examination, anesthetic, medical or surgical diagnosis and emergency hospital which is deemed advisable by and is to be rendered under the general or specific supervision of medical and emergency room staff licensed under the provisions of the medicine practice act and the State of California Department of Public Health.}, 4, true)
-    newline
-    txa(514, 220, %{It is understood that effort shall be made to contact the undersigned prior to rendering treatment to the student, but that any of the above treatment will not be withheld if the undersigned or authorized adults cannot be reached.}, 4, true)
-    newline
-    txa(514, 150, %{#{student.emergency_hospital}}, 2)
-    txa(664, 70, %{is the hospital}, 4, true)
-    txa(514, 220, %{I/we prefer for emergency medical treatment of my/our child.}, 4, true)
-    newline
-    txa(514, 220, %{I/we understand that the school district does not provide accident/medical insurance for students, and I/we further understand that all costs related to medical treatment may be my/our responsibility and not that of the school district.}, 4)
-    newline_at(400)
-    txt(514, 'Parent/Guardian Signature')
-    txt(694, 'Date')  
-    banner_at(437.5, 'VOLUNTEER ASSISTANCE', 514, -1)
-    newline_at(450)
-    txa(514, 220, %{If you live close to school and feel that, if called, you can offer volunteer assistance during an emergency, please provide your name, phone number and expertise.})
-    newline_at(500)
-    txa(514, 220, 'I would like to help in an emergency.', 4, false, 'C')
-    newline_at(542)
-    txt(514, 'Name')
-    txt(694, 'Phone')  
-    newline_at(566)
-    txt(514, 'Qualifications')  
   end
     
 end

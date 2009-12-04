@@ -27,7 +27,7 @@ class CreateStudents < ActiveRecord::Migration
       t.string  :ca_birthplace_city, :limit => 30
       t.string  :ca_birthplace_stateprovince, :limit => 6
       t.string  :ca_dateenroll, :limit => 10 
-      t.string  :ca_daterfep, :limit => 10 
+      t.string  :ca_dateelastatus, :limit => 10 
       t.string  :ca_elastatus, :limit => 4
       t.string  :ca_firstusaschooling, :limit => 10 
       t.boolean :ca_hispanicethnicity 

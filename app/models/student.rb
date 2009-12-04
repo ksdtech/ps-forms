@@ -17,11 +17,6 @@ class Student < ActiveRecord::Base
   validates_numericality_of :enroll_status, :on => :create, :only_integer => true
   validates_numericality_of :home_id, :on => :create, :only_integer => true, :greater_than => 0
   
-  # TODO: new hmong ethnicity 
-  def ca_ethnhm
-    nil
-  end
-    
   def full_name
     "#{first_name} #{last_name}".strip
   end

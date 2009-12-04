@@ -1,6 +1,31 @@
 require 'fpdf'
 require 'field_options'
 
+# Changes for CALPADS
+# ca_birthplace_state -> ca_birthplace_stateprovinceprovince
+# ca_birthplace_country -> ca_birthcountry
+# ca_langfluency -> ca_elastatus
+# ca_ethnaa -> ca_raceblack
+# ca_ethnai -> ca_raceamericanindian
+# ca_ethnaspiai -> ca_raceasianindian
+# ca_ethnaspica -> ca_racecambodian
+# ca_ethnaspich -> ca_racechinese
+# ca_ethnaspigu -> ca_raceguamanian
+# ca_ethnaspiha -> ca_racehawaiian
+# ca_ethnaspija -> ca_racejapanese
+# ca_ethnaspiko -> ca_racekorean
+# ca_ethnaspila -> ca_racelaotian
+# ca_ethnaspioa -> ca_raceasianother
+# ca_ethnaspiopi -> ca_raceotherpacificislander
+# ca_ethnaspisa -> ca_racesamoan
+# ca_ethnaspita -> ca_racetahitian
+# ca_ethnaspivi -> ca_racevietnamese
+# ca_ethnfi -> ca_racefilipino
+# ca_ethnla -> ca_hispanicethnicity
+# ca_ethnwh -> ca_racewhite
+# ca_daterfep -> ca_dateelastatus
+#  -> ca_racehmong
+
 class RegFormPDF < FPDF
   attr_accessor :line_y, :font_height, :chkbox_size, :leading, :txtbox_width, :q_nil
   MAX_FIELD_LENGTH_1 = 125
@@ -353,9 +378,10 @@ class RegFormPDF < FPDF
     txt(138, "City")
     tbx(160, student.ca_birthplace_city)
     txt(276, "State")
-    tbx(300, student.ca_birthplace_state)
+    state_abbrev = (student.ca_birthplace_stateprovince || '').gsub(/(US|MX|CA)\-/, '')
+    tbx(300, state_abbrev)
     txt(416, "Country")
-    tbx(450, fmt_select(COUNTRY_OPTIONS, student.ca_birthplace_country), 126)
+    tbx(450, fmt_select(COUNTRY_OPTIONS, student.ca_birthcountry), 126)
     # ethnicity
     banner_at(260, 'State-Required Demographics: Ethnicity')
     newline_at(276)
@@ -367,7 +393,7 @@ class RegFormPDF < FPDF
     end
     txt(40, 'Primary language spoken at home by student', style)
     tbx(234, fmt_select(LANGUAGE_OPTIONS, student.ca_homelanguage), 144)
-    cbx_test(390, student.ca_langfluency, '1', 'English is only language spoken')    
+    cbx_test(390, student.ca_elastatus, 'EO', 'English is only language spoken')    
     newline
     txt(40, 'Other language spoken at home')
     tbx(234, fmt_select(LANGUAGE_OPTIONS, student.lang_other), 144)
@@ -409,9 +435,10 @@ class RegFormPDF < FPDF
     txt(138, "City")
     tbx(160, student.ca_birthplace_city)
     txt(276, "State")
-    tbx(300, student.ca_birthplace_state)
+    state_abbrev = (student.ca_birthplace_stateprovince || '').gsub(/(US|MX|CA)\-/, '')
+    tbx(300, state_abbrev)
     txt(416, "Country")
-    tbx(450, fmt_select(COUNTRY_OPTIONS, student.ca_birthplace_country), 126)
+    tbx(450, fmt_select(COUNTRY_OPTIONS, student.ca_birthcountry), 126)
     banner_at(256, '2b. (Custody Information - See Emergency Card)')   
     banner_at(272, '2c. (Siblings - See Next Page of This Form)')   
     
@@ -744,35 +771,35 @@ class RegFormPDF < FPDF
     newline_at(224)
     txt(40, "What is your child's ethnicity? Please check one of the two choices below:")
     newline
-    cbx(40, student.ca_ethnla, 'Hispanic or Latino')    
-    cbx(156, student.ca_ethnla === false, 'Not Hispanic or Latino')   
+    cbx(40, student.ca_hispanicethnicity, 'Hispanic or Latino')    
+    cbx(156, student.ca_hispanicethnicity === false, 'Not Hispanic or Latino')   
     newline(12)
     txa(40, 520, "The previous question is about ethnicity, not race.  No matter what you selected above, please continue to answer the following by marking one or more boxes to indicate what you consider your child's racial makeup to be.", 1, true, 'L')
     newline(12)
     txt(40, "What is your child's race? Please check up to five categories from the list below:")
     newline
-    cbx(40, student.ca_ethnaa, 'African American or Black')    
-    cbx(216, student.ca_ethnaspich, 'Chinese')    
-    cbx(332, student.ca_ethnaspila, 'Laotian')
-    cbx(448, student.ca_ethnaspiha, 'Hawaiian')
+    cbx(40, student.ca_raceblack, 'African American or Black')    
+    cbx(216, student.ca_racechinese, 'Chinese')    
+    cbx(332, student.ca_racelaotian, 'Laotian')
+    cbx(448, student.ca_racehawaiian, 'Hawaiian')
     newline(16)
-    cbx(40, student.ca_ethnai, 'American Indian or Alaskan Native')    
-    cbx(216, student.ca_ethnaspija, 'Japanese')    
-    cbx(332, student.ca_ethnaspica, 'Cambodian')    
-    cbx(448, student.ca_ethnaspigu, 'Guamanian')    
+    cbx(40, student.ca_raceamericanindian, 'American Indian or Alaskan Native')    
+    cbx(216, student.ca_racejapanese, 'Japanese')    
+    cbx(332, student.ca_racecambodian, 'Cambodian')    
+    cbx(448, student.ca_raceguamanian, 'Guamanian')    
     newline(16)
-    cbx(40, student.ca_ethnfi, 'Filipino or Filipino American') 
-    cbx(216, student.ca_ethnaspiko, 'Korean')    
-    cbx(332, student.ca_ethnhm, 'Hmong')    
-    cbx(448, student.ca_ethnaspisa, 'Samoan')    
+    cbx(40, student.ca_racefilipino, 'Filipino or Filipino American') 
+    cbx(216, student.ca_racekorean, 'Korean')    
+    cbx(332, student.ca_racehmong, 'Hmong')    
+    cbx(448, student.ca_racesamoan, 'Samoan')    
     newline(16)
-    cbx(40, student.ca_ethnwh, 'White')
-    cbx(216, student.ca_ethnaspivi, 'Vietnamese')    
-    cbx(332, student.ca_ethnaspioa, 'Other Asian')    
-    cbx(448, student.ca_ethnaspita, 'Tahitian')    
+    cbx(40, student.ca_racewhite, 'White')
+    cbx(216, student.ca_racevietnamese, 'Vietnamese')    
+    cbx(332, student.ca_raceasianother, 'Other Asian')    
+    cbx(448, student.ca_racetahitian, 'Tahitian')    
     newline(16)
-    cbx(216, student.ca_ethnaspiai, 'Asian Indian')    
-    cbx(448, student.ca_ethnaspiopi, 'Other Pacific Islander')    
+    cbx(216, student.ca_raceasianindian, 'Asian Indian')    
+    cbx(448, student.ca_raceotherpacificislander, 'Other Pacific Islander')    
     newline(16)
     # parent education
     banner_at(408, '6c. State-Required Demographics: Parent Educational Level')
@@ -810,7 +837,8 @@ class RegFormPDF < FPDF
     tbx(450, fmt_date(student.ca_dateenroll))
     newline
     txt(40, 'If the student was reclassified as Fluent-English Proficient, enter the date of reclassification.')
-    tbx(450, fmt_date(student.ca_daterfep))
+    date_rfep = (student.ca_elastatus == 'RFEP') ? fmt_date(student.ca_dateelastatus) : ''
+    tbx(450, date_rfep)
     # footer
     reg_form_footer
   end

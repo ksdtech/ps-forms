@@ -23,34 +23,35 @@ class CreateStudents < ActiveRecord::Migration
       t.boolean :asthma_medication 
       t.text    :behavior_issues 
       t.boolean :behavior_problems 
+      t.string  :ca_birthcountry, :limit => 2 
       t.string  :ca_birthplace_city, :limit => 30
-      t.string  :ca_birthplace_country, :limit => 2 
-      t.string  :ca_birthplace_state, :limit => 2
+      t.string  :ca_birthplace_stateprovince, :limit => 6
       t.string  :ca_dateenroll, :limit => 10 
       t.string  :ca_daterfep, :limit => 10 
-      t.boolean :ca_ethnaa 
-      t.boolean :ca_ethnai 
-      t.boolean :ca_ethnaspiai 
-      t.boolean :ca_ethnaspica 
-      t.boolean :ca_ethnaspich 
-      t.boolean :ca_ethnaspigu 
-      t.boolean :ca_ethnaspiha 
-      t.boolean :ca_ethnaspija 
-      t.boolean :ca_ethnaspiko 
-      t.boolean :ca_ethnaspila 
-      t.boolean :ca_ethnaspioa 
-      t.boolean :ca_ethnaspiopi 
-      t.boolean :ca_ethnaspisa 
-      t.boolean :ca_ethnaspita 
-      t.boolean :ca_ethnaspivi 
-      t.boolean :ca_ethnfi 
-      t.boolean :ca_ethnla 
-      t.boolean :ca_ethnwh 
+      t.string  :ca_elastatus, :limit => 4
       t.string  :ca_firstusaschooling, :limit => 10 
+      t.boolean :ca_hispanicethnicity 
       t.string  :ca_homelanguage, :limit => 2
-      t.string  :ca_langfluency, :limit => 1
       t.string  :ca_namesuffix, :limit => 30
       t.string  :ca_parented, :limit => 2
+      t.boolean :ca_raceamericanindian 
+      t.boolean :ca_raceasianindian 
+      t.boolean :ca_raceasianother 
+      t.boolean :ca_raceblack 
+      t.boolean :ca_racecambodian 
+      t.boolean :ca_racechinese 
+      t.boolean :ca_racefilipino 
+      t.boolean :ca_raceguamanian 
+      t.boolean :ca_racehawaiian 
+      t.boolean :ca_racehmong
+      t.boolean :ca_racejapanese 
+      t.boolean :ca_racekorean 
+      t.boolean :ca_racelaotian 
+      t.boolean :ca_raceotherpacificislander 
+      t.boolean :ca_racesamoan 
+      t.boolean :ca_racetahitian 
+      t.boolean :ca_racevietnamese 
+      t.boolean :ca_racewhite 
       t.string  :city, :limit => 30
       t.boolean :custody_orders 
       t.string  :dental_carrier, :limit => 60

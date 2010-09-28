@@ -29,7 +29,7 @@ require 'field_options'
 class RegFormPDF < FPDF
   attr_accessor :line_y, :font_height, :chkbox_size, :leading, :txtbox_width, :q_nil
   MAX_FIELD_LENGTH_1 = 125
-  MAX_FIELD_LENGTH_3 = 450
+  MAX_FIELD_LENGTH_3 = 400
   
   class << self
     def missing_data(filename=nil)
@@ -104,9 +104,12 @@ class RegFormPDF < FPDF
     @rffonts = reg_forms
     @effonts = emergency_forms
     @blank_checkboxes = blanks
+    
     super('P', 'pt', 'letter', File.dirname(__FILE__))
     SetCompression(false)
     SetMargins(36, 36)
+    SetAutoPageBreak(false)
+    
     if reg_forms or emergency_forms
       AddFont('ArialNarrow', '',  'arialn.rb')
       AddFont('ArialNarrow', 'B', 'arialnb.rb')
@@ -1199,7 +1202,7 @@ class RegFormPDF < FPDF
     newline
     txt(70, 'Please explain:')
     newline
-    tbx(70, (student.allergies || '')[0,MAX_FIELD_LENGTH_3], 400, 32)
+    tbx(70, (student.allergies || '').pack_to_length(MAX_FIELD_LENGTH_3), 400, 32)
     newline(36)
     has_asthma = student.asthma || student.asthma_inhaler ||
       student.asthma_medication
@@ -1222,26 +1225,26 @@ class RegFormPDF < FPDF
     newline
     has_behavior_problems = student.behavior_problems || !student.behavior_issues.blank?
     cbx(58, has_behavior_problems, 'Behavior problems:')
-    tbx(166, (student.behavior_issues || '')[0,MAX_FIELD_LENGTH_1], 304)
+    tbx(166, (student.behavior_issues || '').pack_to_length(MAX_FIELD_LENGTH_1), 304)
     newline
     has_movement_limits = student.movement_limits || !student.movement_limits_desc.blank?
     cbx(58, has_movement_limits, 'Movement limitations:')
-    tbx(166, (student.movement_limits_desc || '')[0,MAX_FIELD_LENGTH_1], 304)
+    tbx(166, (student.movement_limits_desc || '').pack_to_length(MAX_FIELD_LENGTH_1), 304)
     newline
     has_medical_other = student.medical_other || !student.medical_considerations.blank?
     cbx(58, has_medical_other, 'Other (please explain):')
     newline
-    tbx(70, (student.medical_considerations || '')[0,MAX_FIELD_LENGTH_3], 400, 32)
+    tbx(70, (student.medical_considerations || '').pack_to_length(MAX_FIELD_LENGTH_3), 400, 32)
     newline(36)
     has_illness_recent = student.illness_recent || !student.illness_desc.blank?
     cbx(58, has_illness_recent, 'Recent illness, hospitalization or surgery.  If checked, please provide date(s) and description(s):')
     newline
-    tbx(70, (student.illness_desc || '')[0,MAX_FIELD_LENGTH_3], 400, 32)
+    tbx(70, (student.illness_desc || '').pack_to_length(MAX_FIELD_LENGTH_3), 400, 32)
     newline(36)
     has_medical_accom = student.medical_accom || !student.medical_accom_desc.blank?
     cbx(58, has_medical_accom, 'Medical condition which might requre care or accommodation at school (please describe):')
     newline
-    tbx(70, (student.medical_accom_desc || '')[0,MAX_FIELD_LENGTH_3], 400, 32)
+    tbx(70, (student.medical_accom_desc || '').pack_to_length(MAX_FIELD_LENGTH_3), 400, 44)
     
     # vertical separator
     lin(500, 60, 500, 588)

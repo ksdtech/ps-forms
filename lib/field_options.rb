@@ -34,7 +34,7 @@ STAFF_SCHOOL_OPTIONS = [
   [ 'Kent Middle School', '104' ] ]
   
 REG_YEAR_OPTIONS = [
-  '2007-2008', '2008-2009' ]
+  '2010-2011', '2011-2012' ]
 
 SHORT_GRADE_LEVEL = {
   -1 => 'Pre-K',

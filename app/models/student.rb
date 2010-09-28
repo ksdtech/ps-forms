@@ -38,11 +38,11 @@ class Student < ActiveRecord::Base
   end
   
   def reg_year
-    "2009-2010"
+    "#{APP_CONFIG[:current_year]}-#{APP_CONFIG[:current_year] + 1}"
   end
 
   def short_reg_year
-    "2009"
+    APP_CONFIG[:current_year].to_s
   end
   
   PARENT_LAST =  {

@@ -23,6 +23,12 @@ class Object
   end
 end
 
+class String
+  def pack_to_length(len)
+    self.gsub(/(\s*\<BR[\/ ]*\>\s*|\s+)/i, ' ')[0, len]
+  end
+end
+
 def check_unique(h, key, value, msg_header='check_unique', errors=nil)
   if !key.nil_or_empty? && !value.nil_or_empty?
     if !h.has_key?(key)

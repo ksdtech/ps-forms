@@ -2,6 +2,10 @@ ps-on-rails project
 
 Add-ons to PowerSchool
 
+Before running rake tasks, export all students to data/students.txt,
+using the rails-export-students PowerSchool template; and all staff to
+data/staff.txt using the rails-export-staff template.  Then:
+
 1. To print the family school directory, use these rake tasks:
 
 rake import:all

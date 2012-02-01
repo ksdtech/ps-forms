@@ -28,16 +28,16 @@ namespace :pdf do
   
   desc "emergency forms for new bacich students"
   task :emerg_bacich_new => :environment do
-    coll = Student.find(:all, :conditions => ['schoolid=? AND entrycode IN (?)', 103, ['ND','RD']],
+    coll = Student.find(:all, :conditions => ['schoolid=? AND (grade_level=? OR entrycode IN (?))', 103, 0, ['ND','RD']],
       :order => 'last_name,first_name')
     RegFormPDF.emergency_forms(coll, "#{Rails.root}/data/#{APP_CONFIG[:current_year]}-bx-new.pdf")
   end
   
   desc "emergency forms for new kent students"
   task :emerg_kent_new => :environment do
-    coll = Student.find(:all, :conditions => ['schoolid=? AND entrycode IN (?)', 104, ['ND','RD']],
-      :order => 'last_name,first_name')
-    RegFormPDF.emergency_forms(coll, "#{Rails.root}/data/#{APP_CONFIG[:current_year]}-bx-new.pdf")
+    coll = Student.find(:all, :conditions => ['schoolid=? AND (grade_level=? OR entrycode IN (?))', 104, 5, ['ND','RD']],
+      :order => 'grade_level,last_name,first_name')
+    RegFormPDF.emergency_forms(coll, "#{Rails.root}/data/#{APP_CONFIG[:current_year]}-kx-new.pdf")
   end
   
   desc "generate bacich emergency forms pdf"

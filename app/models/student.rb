@@ -11,6 +11,7 @@ class Student < ActiveRecord::Base
 
   validates_presence_of :last_name, :on => :create
   validates_presence_of :first_name, :on => :create
+  validates_presence_of :entrydate, :on => :create
   validates_numericality_of :student_number, :on => :create, :only_integer => true, :greater_than => 0
   validates_numericality_of :schoolid, :on => :create, :only_integer => true
   validates_numericality_of :grade_level, :on => :create, :only_integer => true
